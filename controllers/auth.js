@@ -3,6 +3,7 @@ const Users = require("../models/Users")
 const bcrypt = require('bcrypt');
 const jsonwebtokenPromisified = require('jsonwebtoken-promisified');
 const path = require("path");
+const fs = require('fs')
 
 const privateKey = fs.readFileSync(path.resolve(__dirname, "../keys/private-key.pem"), 'utf-8');
 const { default: mongoose } = require("mongoose");
@@ -41,11 +42,11 @@ exports.authlogin = async(req, res) => {
                     token: jwtoken
                 }})
             })
-            .catch(err => res.status(400).json({ message: "bad-request2", data: "There's a problem with your account! There's a problem with your account! Please contact customer support for more details."  + err }))
+            .catch(err => res.status(400).json({ message: "bad-request", data: "There's a problem with your account! There's a problem with your account! Please contact customer support for more details."  + err }))
         }
         else{
-            return res.json({ message: "bad-request", data: "There's a problem with your account! There's a problem with your account! Please contact customer support for more details."  + err })
+            return res.json({ message: "failedlogin", data: "Your account does not exist! Please put your correct credentials and try again." })
         }
     })
-    .catch(err => res.status(400).json({ message: "bad-request1", data: "There's a problem with your account! There's a problem with your account! Please contact customer support for more details." }))
+    .catch(err => res.status(400).json({ message: "bad-request", data: "There's a problem with your account! Please contact customer support for more details. error code: " + err }))
 }

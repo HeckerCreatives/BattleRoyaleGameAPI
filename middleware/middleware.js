@@ -1,5 +1,6 @@
 const Users = require("../models/Users")
 const Staffusers = require("../models/Staffusers")
+const Maintenance = require("../models/Maintenance")
 const fs = require('fs');
 const path = require("path");
 const publicKey = fs.readFileSync(path.resolve(__dirname, "../keys/public-key.pem"), 'utf-8');
@@ -16,121 +17,55 @@ const verifyJWT = async (token) => {
 };
 
 exports.protectplayer = async (req, res, next) => {
-    const token = req.headers.cookie?.split('; ').find(row => row.startsWith('sessionToken='))?.split('=')[1]
+    const token = req.headers.authorization
 
     if (!token){
-        return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
+        return res.status(300).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
     }
 
     try{
-        const decodedToken = await verifyJWT(token);
+        if (!token.startsWith("Bearer")){
+            return res.status(300).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
+        }
+
+        // const maintenancedata = await Maintenance.findOne({type: "fullgame"})
+        // .then(data => data)
+        // .catch(err => {
+        //     console.log(`There's a problem getting maintenance data ${err}`)
+        //     return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+        // })
+
+        // if (maintenancedata.value != "0"){
+        //     return res.status(400).json({ message: "bad-request", data: "The game is currently under maintenance! Please check our website for more details and try again later." })
+        // }
+
+        const headerpart = token.split(' ')[1]
+
+        const decodedToken = await verifyJWT(headerpart);
 
         if (decodedToken.auth != "player"){
-            return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
+            return res.status(300).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
         }
 
         const user = await Users.findOne({username: decodedToken.username})
         .then(data => data)
 
         if (!user){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
+            return res.status(300).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
         }
 
         if (user.status != "active"){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
+            return res.status(300).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
         }
 
-        if (decodedToken.token != user.webtoken){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'duallogin', data: `Your account had been opened on another device! You will now be logged out.` });
+        if (decodedToken.token != user.gametoken){
+            return res.status(300).json({ message: 'duallogin', data: `Your account had been opened on another device! You will now be logged out.` });
         }
 
         req.user = decodedToken;
         next();
     }
     catch(ex){
-        return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-    }
-}
-
-exports.protectsuperadmin = async (req, res, next) => {
-    const token = req.headers.cookie?.split('; ').find(row => row.startsWith('sessionToken='))?.split('=')[1]
-
-    if (!token){
-        return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-    }
-
-    try{
-        const decodedToken = await verifyJWT(token);
-
-        if (decodedToken.auth != "superadmin"){
-            return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-        }
-
-        const user = await Staffusers.findOne({username: decodedToken.username})
-        .then(data => data)
-
-        if (!user){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-        }
-
-        if (user.status != "active"){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
-        }
-
-        if (decodedToken.token != user.webtoken){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'duallogin', data: `Your account had been opened on another device! You will now be logged out.` });
-        }
-
-        req.user = decodedToken;
-        next();
-    }
-    catch(ex){
-        return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-    }
-}
-
-exports.protectadmin = async (req, res, next) => {
-    const token = req.headers.cookie?.split('; ').find(row => row.startsWith('sessionToken='))?.split('=')[1]
-
-    if (!token){
-        return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-    }
-
-    try{
-        const decodedToken = await verifyJWT(token);
-
-        if (decodedToken.auth != "admin"){
-            return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-        }
-
-        const user = await Staffusers.findOne({username: decodedToken.username})
-        .then(data => data)
-
-        if (!user){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
-        }
-
-        if (user.status != "active"){
-            res.clearCookie('sessionToken', { path: '/' })
-            return res.status(401).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
-        }
-
-        // if (decodedToken.token != user.webtoken){
-        //     res.clearCookie('sessionToken', { path: '/' })
-        //     return res.status(401).json({ message: 'duallogin', data: `Your account had been opened on another device! You will now be logged out.` });
-        // }
-
-        req.user = decodedToken;
-        next();
-    }
-    catch(ex){
-        return res.status(401).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
+        return res.status(300).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
     }
 }

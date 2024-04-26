@@ -1,14 +1,11 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
-const cookieParser = require('cookie-parser');
 const http = require("http");
 const cors = require("cors");
 require("dotenv").config();
 
 const app = express();
-
-const {initialize} = require("./initialization/serverinitialize")
 
 const corsConfig = {
     origin: [""],
@@ -27,7 +24,6 @@ mongoose
     useUnifiedTopology: true,
   })
   .then(() => {
-    initialize();
     console.log("MongoDB Connected");
   })
   .catch((err) => console.log(err));
@@ -35,11 +31,10 @@ mongoose
 
 app.use(bodyParser.json({ limit: "50mb" }))
 app.use(bodyParser.urlencoded({ limit: "50mb", extended: false, parameterLimit: 50000 }))
-app.use(cookieParser());
 
 // Routes
 require("./routes")(app);
 
 
-const port = process.env.PORT || 5001; // Dynamic port for deployment
+const port = process.env.PORT || 5000; // Dynamic port for deployment
 server.listen(port, () => console.log(`Server is running on port: ${port}`));
