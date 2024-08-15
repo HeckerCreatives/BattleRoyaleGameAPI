@@ -4,6 +4,8 @@ const routers = app => {
     app.use("/auth", require("./auth"))
     app.use("/characters", require("./playercharactersettings"))
     app.use("/inbox", require("./inbox"))
+    app.use("/leaderboard", require("./leaderboard"))
+    app.use("/usergamedetail", require("./usergamedetails"))
 }
 
 module.exports = routers
