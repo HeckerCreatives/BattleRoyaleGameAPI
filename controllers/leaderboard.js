@@ -8,6 +8,7 @@ exports.getleaderboard = async (req, res) => {
         path: "owner",
         select: "username"
     })
+    .limit(10)
     .sort({amount: -1})
     .then(data => data)
     .catch(err => {
@@ -23,13 +24,13 @@ exports.getleaderboard = async (req, res) => {
     let tempindex = 0;
 
     const data = {
-        leaderboard: {}
+
     }
 
     lbdata.forEach(tempdata => {
         const {owner, amount} = tempdata
 
-        data.leaderboard[tempindex] = {
+        data[tempindex] = {
             user: owner.username,
             amount: amount
         };
