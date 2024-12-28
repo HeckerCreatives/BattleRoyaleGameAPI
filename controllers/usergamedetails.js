@@ -21,3 +21,61 @@ exports.getusergamedetails = async (req, res) => {
 
     return res.json({message: "success", data: data})
 }
+
+
+exports.updateusergamedetails = async (req, res) => {
+
+    const {id, username} = req.user
+
+    const { kill, death, rank } = req.body
+    const usergamedata = await Usergamedetails.findOne({owner: new mongoose.Types.ObjectId(id)})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the user game details for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the user game details"})
+    })
+
+    let level = usergamedata.level
+
+
+    let xpearned = ((parseInt(level) / 2) * 10) + (((100 - parseInt(rank) + 1) / 100) * 20) + ((parseInt(kill) * (parseInt(level)/ 2)) * 5)
+
+    let newxp = usergamedata.xp + xpearned
+
+    let newlevel = level
+
+    let expneeded = 80 * level
+
+    let newKills = usergamedata.kill + kill
+    let newDeaths = usergamedata.death + death
+
+    if (newxp >= expneeded){
+        newlevel = level + 1
+        newxp = newxp - expneeded
+    }
+
+   const data =  await Usergamedetails.findOneAndUpdate(
+        {
+            owner: new mongoose.Types.ObjectId(id)
+        },
+        {
+            $set: {
+                kill: parseInt(newKills),
+                death: parseInt(newDeaths),
+                level: parseInt(newlevel),
+                xp: parseInt(newxp)
+            }
+        }
+    )
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem updating the user game details for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem updating the user game details"})
+    })
+
+
+    return res.json({message: "success", data: data})
+
+}
