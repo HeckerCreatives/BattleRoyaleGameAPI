@@ -7,10 +7,111 @@ const fs = require('fs')
 
 const privateKey = fs.readFileSync(path.resolve(__dirname, "../keys/private-key.pem"), 'utf-8');
 const { default: mongoose } = require("mongoose");
+const Wallets = require("../models/Wallets");
+const PlayerCharacterSetting = require("../models/Playercharactersettings");
+const Leaderboard = require("../models/Leaderboard");
+const Usergamedetails = require("../models/Usergamedetails");
+const Userdetails = require("../models/Userdetails");
 
 const encrypt = async password => {
     const salt = await bcrypt.genSalt(10);
     return await bcrypt.hash(password, salt);
+}
+
+
+exports.register = async (req, res) => {
+    
+    const { username, password, email, country } = req.body;
+
+    if(!email || !username || !password || !country){
+        return res.status(400).json({ message: "failed", data: "Please enter all user details."})
+    }
+    if(username.length < 6 || username.length > 15){
+        return res.status(400).json({ message: "failed", data: "Minimum of 5 and maximum of 20 characters only for password! Please try again."})
+    }
+    if(password.length < 5 || password.length > 20){
+        return res.status(400).json({ message: "failed", data: "Minimum of 5 and maximum of 20 characters only for password! Please try again."})
+    }
+    
+    const usernameExists = await Users.findOne({ username: { $regex: `^${username}$`, $options: 'i' } })
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem encountered while searching for user: ${username} Error: ${err}`)
+    })
+    const usernameRegex = /^[a-zA-Z0-9]+$/;
+
+    if(!usernameRegex.test(username)){
+        return res.status(400).json({ message: "failed", data: "Special characters in username are not allowed."})
+    }
+    if(usernameExists){
+        return res.status(400).json({ message: "bad-request", data: "Username has already been used."})
+    }
+    const emailExists = await Userdetails.findOne({
+        email: { $regex: `^${email}$`, $options: 'i' } })
+        .then(data => data)
+        .catch(err => {
+            console.log(`There's a problem encountered while searching for email: ${email} Error: ${err}`);
+        });
+
+    if(emailExists){
+        return res.status(400).json({ message: "bad-request", data: "Email has already been used."})
+    }
+
+    const user = await Users.create({ username: username, password: password, gametoken: "", webtoken: "", bandate: "", banreason: "", status: "active" })
+    .then(data => data)
+    .catch(err => {
+        console.log(`Uh oh... there's a problem encountered while creating user login for ${username} Error: ${err}`)
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again." })
+    })
+    await Userdetails.create({ owner: new mongoose.Types.ObjectId(user._id), email: email, country: country, profilepicture: "" })
+    .catch(async (err)=> {
+        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
+        
+        await Users.findOneAndDelete({ username: username})
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
+    })
+
+    await Usergamedetails.create({ owner: new mongoose.Types.ObjectId(user._id), kill: 0, death: 0, level: 1, xp: 0})
+    .catch(async (err)=> {
+        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
+        
+        await Users.findOneAndDelete({ username: username})
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
+    })
+
+    await Leaderboard.create({ owner: new mongoose.Types.ObjectId(user._id), amount: 0})
+    .catch(async (err)=> {
+        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
+        
+        await Users.findOneAndDelete({ username: username})
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
+    })
+
+    await PlayerCharacterSetting.create({ owner: new mongoose.Types.ObjectId(user._id), hairstyle: 0, haircolor: 0, clothingcolor: 0, skincolor: 0})
+    .catch(async (err)=> {
+        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
+        
+        await Users.findOneAndDelete({ username: username })
+
+        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
+    })
+
+    const walletListData = ["credits", "token"]
+    const walletBulkWrite = walletListData.map(walletData => ({
+        insertOne: {
+            document: { owner: user._id, type: walletData, value: "0" }
+        }
+    }));
+
+    await Wallets.bulkWrite(walletBulkWrite)
+
+
+    return res.json({ message: "success" })
+
 }
 
 exports.authlogin = async(req, res) => {
