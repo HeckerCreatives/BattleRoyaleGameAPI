@@ -27,7 +27,7 @@ exports.register = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "Please enter all user details."})
     }
     if(username.length < 6 || username.length > 15){
-        return res.status(400).json({ message: "failed", data: "Minimum of 5 and maximum of 20 characters only for password! Please try again."})
+        return res.status(400).json({ message: "failed", data: "Minimum of 5 and maximum of 15 characters only for username! Please try again."})
     }
     if(password.length < 5 || password.length > 20){
         return res.status(400).json({ message: "failed", data: "Minimum of 5 and maximum of 20 characters only for password! Please try again."})
@@ -41,7 +41,7 @@ exports.register = async (req, res) => {
     const usernameRegex = /^[a-zA-Z0-9]+$/;
 
     if(!usernameRegex.test(username)){
-        return res.status(400).json({ message: "failed", data: "Special characters in username are not allowed."})
+        return res.status(400).json({ message: "failed", data: "Special characters or spaces in username are not allowed."})
     }
     if(usernameExists){
         return res.status(400).json({ message: "bad-request", data: "Username has already been used."})
@@ -124,6 +124,10 @@ exports.authlogin = async(req, res) => {
                 return res.status(401).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
             }
 
+            if (user.gametoken != ''){
+                return res.status(401).json({ message: 'failed', data: `Your account is currently logged in on another device! Please logout first and login again` });
+            }
+
             const token = await encrypt(privateKey)
 
             await Users.findByIdAndUpdate({_id: user._id}, {$set: {gametoken: token}}, { new: true })
@@ -147,6 +151,24 @@ exports.authlogin = async(req, res) => {
         }
         else{
             return res.json({ message: "failedlogin", data: "Your account does not exist! Please put your correct credentials and try again." })
+        }
+    })
+    .catch(err => res.status(400).json({ message: "bad-request", data: "There's a problem with your account! Please contact customer support for more details. error code: " + err }))
+}
+
+exports.checkuserlogin = async (req, res) => {
+    const { username, password } = req.query;
+
+    Users.findOne({ username: { $regex: new RegExp('^' + username + '$', 'i') } })
+    .then(async user => {
+        if (user && (await user.matchPassword(password))){
+            if (user.status != "active"){
+                return res.status(401).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
+            }
+            return res.json({message: "success", data: "canlogin"})
+        }
+        else{
+            return res.status(400).json({message: "failed", data: "No active user data found! Please check username and password"})
         }
     })
     .catch(err => res.status(400).json({ message: "bad-request", data: "There's a problem with your account! Please contact customer support for more details. error code: " + err }))

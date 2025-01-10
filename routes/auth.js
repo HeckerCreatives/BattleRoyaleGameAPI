@@ -4,5 +4,6 @@ const { authlogin, getreferralusername, register } = require("../controllers/aut
 router
     .get("/login", authlogin)
     .post("/register", register)
+    .get("/checkuserlogin", checkuserlogin)
 
 module.exports = router;
