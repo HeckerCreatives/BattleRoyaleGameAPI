@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { authlogin, getreferralusername, register } = require("../controllers/auth")
+const { authlogin, checkuserlogin, register } = require("../controllers/auth")
 
 router
     .get("/login", authlogin)
