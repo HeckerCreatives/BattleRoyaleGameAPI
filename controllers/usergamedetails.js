@@ -39,7 +39,8 @@ exports.updateusergamedetails = async (req, res) => {
     let level = usergamedata.level
 
 
-    let xpearned = ((parseInt(level) / 2) * 10) + (((100 - parseInt(rank) + 1) / 100) * 20) + ((parseInt(kill) * (parseInt(level)/ 2)) * 5)
+    let xpearned = ((parseInt(level) / 2) * 3) + (((100 - parseInt(rank) + 1) / 100) * 20) + 
+    (parseInt(kill) * ((parseInt(level)/ 4) + 1))
 
     let newxp = usergamedata.xp + xpearned
 
