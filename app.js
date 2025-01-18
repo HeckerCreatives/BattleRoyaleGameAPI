@@ -40,7 +40,9 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: false, parameterLimit: 
 const {userlogout} = require("./utils/auth")
 
 const io = socketIo(server, {
-  cors: corsConfig
+  cors: corsConfig,
+  pingInterval: 10000, // Interval to send ping packets
+  pingTimeout: 20000,  // Time to wait for pong response
 });
 
 io.use((socket, next) => {
@@ -65,13 +67,13 @@ io.on("connection", (socket) => {
 
   // Function to send the ping to the client
   const sendPing = () => {
+    if (!socket.connected) return; // Prevent sending ping if socket is already disconnected
     console.log('Sending ping to:', socket.id);
-    socket.emit('ping', Date.now()); // Send the ping message with timestamp
-
-    // If no pong received within TIMEOUT ms, disconnect the player
+    socket.emit('ping', Date.now());
+  
     heartbeatTimer = setTimeout(() => {
-        console.log('No pong received from', socket.id, '. Disconnecting...');
-        socket.disconnect(); // Disconnect the player after timeout
+      console.log('No pong received from', socket.id, '. Disconnecting...');
+      socket.disconnect(); // Ensure disconnection after timeout
     }, TIMEOUT);
   };
 
@@ -101,17 +103,16 @@ io.on("connection", (socket) => {
   });
 
   // Handle disconnection
-  socket.on("disconnect", () => {
-    console.log(`user disconnecting ${socket.id}`)
-    // Remove the user from active users if they disconnect
+  socket.on("disconnect", (reason) => {
+    console.log(`User ${socket.id} disconnected. Reason: ${reason}`);
+    clearTimeout(heartbeatTimer);
     for (const [userid, socketid] of activeUsers.entries()) {
-        if (socketid === socket.id) {
-            clearTimeout(heartbeatTimer);
-            activeUsers.delete(userid);
-            userlogout(userid);
-            console.log(`User ${userid} removed from active users due to disconnection`);
-            break;
-        }
+      if (socketid === socket.id) {
+        activeUsers.delete(userid);
+        userlogout(userid);
+        console.log(`User ${userid} removed from active users due to disconnection`);
+        break;
+      }
     }
   });
 });
