@@ -78,19 +78,22 @@ exports.getsociallinks = async (req, res) => {
         limit: parseInt(limit) || 10,
     }
     
-    await Sociallinks.find()
+  const data =  await Sociallinks.find()
     .skip(pageOptions.page * pageOptions.limit)
     .limit(pageOptions.limit)   
     .then(data => {
         if(!data){
             return res.status(400).json({ message: "failed", data: "No social links data found."})
         }
+        console.log(data)
         return res.status(200).json({ message: "success", data: data })
+
     })
     .catch(err => {
         console.log(`There's a problem encountered while fetching social link. Error: ${err}`)
         return res.status(400).json({ message: "bad-request", data: "There's a problem with the server. Please contact support for more details."})
     })
+    
 }
 
 exports.getspecificsociallink = async (req, res) => {

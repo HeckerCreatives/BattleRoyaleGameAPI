@@ -5,6 +5,7 @@ const routers = app => {
     app.use("/characters", require("./playercharactersettings"))
     app.use("/inbox", require("./inbox"))
     app.use("/leaderboard", require("./leaderboard"))
+    app.use("/sociallinks", require("./sociallinks"))
     app.use("/usergamedetail", require("./usergamedetails"))
 }
 
