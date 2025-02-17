@@ -15,7 +15,7 @@ exports.getinboxlist = async (req, res) => {
     });
 
     if (messages.length <= 0){
-        return res.json({message: "success", data: {inbox: []}})
+        return res.json({message: "success", data: []})
     }
 
     const inboxdata = []
