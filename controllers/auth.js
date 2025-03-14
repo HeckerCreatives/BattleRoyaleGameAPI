@@ -12,6 +12,7 @@ const PlayerCharacterSetting = require("../models/Playercharactersettings");
 const Leaderboard = require("../models/Leaderboard");
 const Usergamedetails = require("../models/Usergamedetails");
 const Userdetails = require("../models/Userdetails");
+const Maintenance = require("../models/Maintenance")
 
 const encrypt = async password => {
     const salt = await bcrypt.genSalt(10);
@@ -126,6 +127,17 @@ exports.authlogin = async(req, res) => {
 
             if (user.gametoken != ''){
                 return res.status(401).json({ message: 'failed', data: `Your account is currently logged in on another device! Please logout first and login again` });
+            }
+
+            const maintenancedata = await Maintenance.findOne({type: "fullgame"})
+            .then(data => data)
+            .catch(err => {
+                console.log(`There's a problem getting maintenance data ${err}`)
+                return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+            })
+    
+            if (maintenancedata.value != "0"){
+                return res.status(400).json({ message: "bad-request", data: "The game is currently under maintenance! Please check our website for more details and try again later." })
             }
 
             const token = await encrypt(privateKey)

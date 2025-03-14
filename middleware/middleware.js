@@ -28,16 +28,16 @@ exports.protectplayer = async (req, res, next) => {
             return res.status(300).json({ message: 'Unauthorized', data: "You are not authorized to view this page. Please login the right account to view the page." });
         }
 
-        // const maintenancedata = await Maintenance.findOne({type: "fullgame"})
-        // .then(data => data)
-        // .catch(err => {
-        //     console.log(`There's a problem getting maintenance data ${err}`)
-        //     return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
-        // })
+        const maintenancedata = await Maintenance.findOne({type: "fullgame"})
+        .then(data => data)
+        .catch(err => {
+            console.log(`There's a problem getting maintenance data ${err}`)
+            return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+        })
 
-        // if (maintenancedata.value != "0"){
-        //     return res.status(400).json({ message: "bad-request", data: "The game is currently under maintenance! Please check our website for more details and try again later." })
-        // }
+        if (maintenancedata.value != "0"){
+            return res.status(405).json({ message: "bad-request", data: "The game is currently under maintenance! Please check our website for more details and try again later." })
+        }
 
         const headerpart = token.split(' ')[1]
 

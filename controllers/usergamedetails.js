@@ -1,6 +1,7 @@
 const { default: mongoose } = require("mongoose")
 const Usergamedetails = require("../models/Usergamedetails")
 const Leaderboard = require("../models/Leaderboard")
+const Maintenance = require("../models/Maintenance")
 
 exports.getusergamedetails = async (req, res) => {
     const {id, username} = req.user
@@ -43,7 +44,6 @@ exports.getusergamedetails = async (req, res) => {
 
     return res.json({message: "success", data: data})
 }
-
 
 exports.updateusergamedetails = async (req, res) => {
 
@@ -101,4 +101,21 @@ exports.updateusergamedetails = async (req, res) => {
 
     return res.json({message: "success", data: data})
 
+}
+
+exports.checkingamemaintenance = async (req, res) => {
+    const {id} = req.user
+
+    const maintenancedata = await Maintenance.findOne({type: "ingame"})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting maintenance data ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    if (maintenancedata.value != "0"){
+        return res.status(400).json({ message: "bad-request", data: "The in-game map is currently under maintenance! Please check our website for more details and try again later." })
+    }
+
+    return res.json({message: "success"})
 }
