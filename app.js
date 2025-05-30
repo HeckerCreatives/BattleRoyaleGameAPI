@@ -109,7 +109,6 @@ io.on("connection", (socket) => {
     for (const [userid, socketid] of activeUsers.entries()) {
       if (socketid === socket.id) {
         activeUsers.delete(userid);
-        userlogout(userid);
         console.log(`User ${userid} removed from active users due to disconnection`);
         break;
       }

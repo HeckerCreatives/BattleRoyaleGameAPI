@@ -128,38 +128,38 @@ exports.authlogin = async(req, res) => {
             if (user.gametoken != ''){
                 return res.status(401).json({ message: 'failed', data: `Your account is currently logged in on another device! Please logout first and login again` });
             }
-
+console.log("1")
             const maintenancedata = await Maintenance.findOne({type: "fullgame"})
             .then(data => data)
             .catch(err => {
                 console.log(`There's a problem getting maintenance data ${err}`)
                 return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
             })
-    
+            console.log(maintenancedata)
+console.log("2")
             if (maintenancedata.value != "0"){
                 return res.status(400).json({ message: "bad-request", data: "The game is currently under maintenance! Please check our website for more details and try again later." })
             }
 
+console.log("3")
             const token = await encrypt(privateKey)
+console.log("4")
 
-            await Users.findByIdAndUpdate({_id: user._id}, {$set: {gametoken: token}}, { new: true })
-            .then(async () => {
-                const payload = { id: user._id, username: user.username, status: user.status, token: token, auth: "player" }
+            const payload = { id: user._id, username: user.username, status: user.status, token: token, auth: "player" }
 
-                let jwtoken = ""
+            let jwtoken = ""
 
-                try {
-                    jwtoken = await jsonwebtokenPromisified.sign(payload, privateKey, { algorithm: 'RS256' });
-                } catch (error) {
-                    console.error('Error signing token:', error.message);
-                    return res.status(500).json({ error: 'Internal Server Error', data: "There's a problem signing in! Please contact customer support for more details! Error 004" });
-                }
-                return res.json({message: "success", data: {
-                    auth: "player",
-                    token: jwtoken
-                }})
-            })
-            .catch(err => res.status(400).json({ message: "bad-request", data: "There's a problem with your account! There's a problem with your account! Please contact customer support for more details."  + err }))
+            try {
+                jwtoken = await jsonwebtokenPromisified.sign(payload, privateKey, { algorithm: 'RS256' });
+            } catch (error) {
+                console.error('Error signing token:', error.message);
+                return res.status(500).json({ error: 'Internal Server Error', data: "There's a problem signing in! Please contact customer support for more details! Error 004" });
+            }
+console.log("5")
+            return res.json({message: "success", data: {
+                auth: "player",
+                token: jwtoken
+            }})
         }
         else{
             return res.json({ message: "failedlogin", data: "Your account does not exist! Please put your correct credentials and try again." })

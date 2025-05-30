@@ -55,11 +55,7 @@ exports.protectplayer = async (req, res, next) => {
         }
 
         if (user.status != "active"){
-            return res.status(300).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
-        }
-
-        if (decodedToken.token != user.gametoken){
-            return res.status(300).json({ message: 'duallogin', data: `Your account had been opened on another device! You will now be logged out.` });
+            return res.status(405).json({ message: 'failed', data: `Your account had been ${user.status}! Please contact support for more details.` });
         }
 
         req.user = decodedToken;
