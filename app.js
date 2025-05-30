@@ -55,96 +55,112 @@ io.use((socket, next) => {
   }
 });
 
-const activeUsers = new Map(); // userId -> socket.id
-const socketHeartbeats = new Map(); // socket.id -> timeout
+const HEARTBEAT_INTERVAL = 5000; // Send ping every 10 seconds
+const TIMEOUT = 10000;            // Wait 10 seconds for pong
+const MAX_MISSED_PINGS = 3;
 
-const TIMEOUT = 20000; // 10 seconds
+const activeUsers = new Map();          // userId -> socket.id
+const socketHeartbeats = new Map();     // socket.id -> { interval, timeout, missedPings }
 
 io.on("connection", (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
-
-  // Store userId for cleanup later
   let currentUserId = null;
 
-  const sendPing = () => {
-    if (!socket.connected) return;
-    console.log('Sending ping to:', socket.id);
-    socket.emit('ping', Date.now());
+  const startHeartbeat = () => {
+    const heartbeatData = {
+      missedPings: 0,
+      interval: null,
+      timeout: null,
+    };
 
-    // Set timeout for pong response
-    const timer = setTimeout(() => {
-      console.log(`No pong from ${socket.id}, disconnecting...`);
-      forceLogout(socket);
-    }, TIMEOUT);
+    const sendPing = () => {
+      if (!socket.connected) return;
 
-    socketHeartbeats.set(socket.id, timer);
+      console.log(`Sending ping to ${socket.id}`);
+      socket.emit("ping", Date.now());
+
+      heartbeatData.timeout = setTimeout(() => {
+        heartbeatData.missedPings++;
+        console.warn(`Missed pong from ${socket.id} (${heartbeatData.missedPings}/${MAX_MISSED_PINGS})`);
+
+        if (heartbeatData.missedPings >= MAX_MISSED_PINGS) {
+          console.log(`Too many missed pings. Disconnecting ${socket.id}`);
+          forceLogout(socket);
+        }
+      }, TIMEOUT);
+    };
+
+    // Start ping loop
+    sendPing();
+    heartbeatData.interval = setInterval(sendPing, HEARTBEAT_INTERVAL);
+
+    socketHeartbeats.set(socket.id, heartbeatData);
   };
 
-  const forceLogout = (socketToKick) => {
-    const timer = socketHeartbeats.get(socketToKick.id);
-    if (timer) clearTimeout(timer);
-    socketHeartbeats.delete(socketToKick.id);
+  const stopHeartbeat = () => {
+    const hb = socketHeartbeats.get(socket.id);
+    if (!hb) return;
+    clearInterval(hb.interval);
+    clearTimeout(hb.timeout);
+    socketHeartbeats.delete(socket.id);
+  };
 
-    for (const [userId, socketId] of activeUsers.entries()) {
-      if (socketId === socketToKick.id) {
+  const forceLogout = (sock) => {
+    stopHeartbeat();
+
+    for (const [userId, sockId] of activeUsers.entries()) {
+      if (sockId === sock.id) {
         activeUsers.delete(userId);
-        console.log(`Force-logged out user ${userId}`);
+        userlogout(userId);
+        console.log(`Force-logged out ${userId}`);
         break;
       }
     }
 
-    socketToKick.disconnect(true);
+    sock.disconnect(true);
   };
 
   socket.on("pong", (timestamp) => {
-    const timer = socketHeartbeats.get(socket.id);
-    if (timer) clearTimeout(timer);
+    const hb = socketHeartbeats.get(socket.id);
+    if (hb) {
+      clearTimeout(hb.timeout);
+      hb.missedPings = 0; // Reset on success
+    }
 
     const latency = Date.now() - timestamp;
     console.log(`Pong from ${socket.id}, latency: ${latency}ms`);
-
-    // Schedule next ping
-    setTimeout(sendPing, TIMEOUT);
   });
 
   socket.on("login", (id) => {
-    const userId = id.toLowerCase();
-    currentUserId = userId;
+    currentUserId = id.toLowerCase();
+    const existing = activeUsers.get(currentUserId);
 
-    console.log(`User ${userId} attempting to log in`);
-
-    // If user already has a socket, disconnect it
-    const existingSocketId = activeUsers.get(userId);
-    if (existingSocketId && existingSocketId !== socket.id) {
-      console.log(`User ${userId} already logged in, disconnecting old socket: ${existingSocketId}`);
-      const oldSocket = io.sockets.sockets.get(existingSocketId);
+    if (existing && existing !== socket.id) {
+      const oldSocket = io.sockets.sockets.get(existing);
       if (oldSocket) forceLogout(oldSocket);
     }
 
-    activeUsers.set(userId, socket.id);
-    socket.join(userId);
-    sendPing();
+    activeUsers.set(currentUserId, socket.id);
+    socket.join(currentUserId);
+    startHeartbeat();
 
-    console.log(`User ${userId} logged in with socket ${socket.id}`);
+    console.log(`User ${currentUserId} logged in on ${socket.id}`);
   });
 
-  // Cleanup before socket leaves rooms
   socket.on("disconnecting", (reason) => {
-    console.log(`Disconnecting socket ${socket.id} (reason: ${reason})`);
-    const timer = socketHeartbeats.get(socket.id);
-    if (timer) clearTimeout(timer);
-    socketHeartbeats.delete(socket.id);
+    console.log(`Disconnecting ${socket.id}, reason: ${reason}`);
+    stopHeartbeat();
 
     if (currentUserId && activeUsers.get(currentUserId) === socket.id) {
       activeUsers.delete(currentUserId);
-      console.log(`User ${currentUserId} removed from active users`);
+      userlogout(currentUserId);
     }
   });
 
   socket.on("disconnect", (reason) => {
-    console.log(`Socket ${socket.id} fully disconnected. Reason: ${reason}`);
+    console.log(`Socket ${socket.id} disconnected. Reason: ${reason}`);
   });
 });
+
 // Routes
 require("./routes")(app);
 
