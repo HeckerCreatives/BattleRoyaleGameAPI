@@ -50,8 +50,8 @@ exports.getusergamedetails = async (req, res) => {
         level: usergamedata.level,
         xp: usergamedata.xp,
         userrank: rankvalue,
-        energy: energyval,
-        leaderboard: lbvalue,
+        energy: energyval.energy,
+        leaderboard: lbvalue.amount,
         energyresettime: getsecondsuntilmidnight()
     }
 
