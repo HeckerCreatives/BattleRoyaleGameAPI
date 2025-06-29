@@ -49,7 +49,8 @@ exports.getusergamedetails = async (req, res) => {
         level: usergamedata.level,
         xp: usergamedata.xp,
         userrank: rankvalue,
-        energy: energyval
+        energy: energyval,
+        leaderboard: lbvalue
     }
 
     return res.json({message: "success", data: data})
