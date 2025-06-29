@@ -3,6 +3,7 @@ const Usergamedetails = require("../models/Usergamedetails")
 const Leaderboard = require("../models/Leaderboard")
 const Maintenance = require("../models/Maintenance")
 const Energy = require("../models/Energy")
+const {getsecondsuntilmidnight} = require("../utils/datetime")
 
 exports.getusergamedetails = async (req, res) => {
     const {id, username} = req.user
@@ -50,7 +51,8 @@ exports.getusergamedetails = async (req, res) => {
         xp: usergamedata.xp,
         userrank: rankvalue,
         energy: energyval,
-        leaderboard: lbvalue
+        leaderboard: lbvalue,
+        energyresettime: getsecondsuntilmidnight()
     }
 
     return res.json({message: "success", data: data})
