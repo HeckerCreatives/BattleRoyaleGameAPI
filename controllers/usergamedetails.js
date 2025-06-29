@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose")
 const Usergamedetails = require("../models/Usergamedetails")
 const Leaderboard = require("../models/Leaderboard")
 const Maintenance = require("../models/Maintenance")
+const Energy = require("../models/Energy")
 
 exports.getusergamedetails = async (req, res) => {
     const {id, username} = req.user
@@ -34,12 +35,21 @@ exports.getusergamedetails = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem with the server. Please try again later"})
     })
 
+    const energyval = await Energy.findOne({owner: new mongoose.Types.ObjectId(id)})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the user value energy`)
+        
+        return res.status(400).json({message: "bad-request", data: "There's a problem with the server. Please try again later"})
+    })
+
     const data = {
         kill: usergamedata.kill,
         death: usergamedata.death,
         level: usergamedata.level,
         xp: usergamedata.xp,
         userrank: rankvalue,
+        energy: energyval
     }
 
     return res.json({message: "success", data: data})
