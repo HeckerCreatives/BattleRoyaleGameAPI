@@ -132,3 +132,11 @@ exports.checkingamemaintenance = async (req, res) => {
 
     return res.json({message: "success"})
 }
+
+exports.useenergy = async (req, res) => {
+    const {id, username} = req.user
+
+    await Energy.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id), energy: {$gt: 0}}, {$inc: { energy: -1}})
+
+    return res.json({message: "success"})
+}
