@@ -18,6 +18,13 @@ const corsConfig = {
     credentials: true, // Allowed Headers to be received
 };
 
+let asiacount = 0
+let uaecount = 0
+let americacount = 0
+let americawestcount = 0
+let africacount = 0
+let totalplayers = 0
+
 app.use(cors(corsConfig));
 const server = http.createServer(app);
 
@@ -45,10 +52,11 @@ const io = socketIo(server, {
   pingTimeout: 20000,
 });
 
+
 // Token-based authentication middleware
 io.use((socket, next) => {
   if (socket.handshake.query.token === "UNITY") {
-    console.log("UNITY AUTHENTICATION");
+    
     next();
   } else {
     next(new Error("Authentication error"));
@@ -64,6 +72,7 @@ const socketHeartbeats = new Map();     // socket.id -> { interval, timeout, mis
 
 io.on("connection", (socket) => {
   let currentUserId = null;
+  let currentregion = null;
 
   const startHeartbeat = () => {
     const heartbeatData = {
@@ -111,6 +120,20 @@ io.on("connection", (socket) => {
       if (sockId === sock.id) {
         activeUsers.delete(userId);
         userlogout(userId);
+
+        if (sock.data.region == "asia"){
+          asiacount -= 1;
+        }
+        else if (sock.data.region == "uae"){
+          uaecount -= 1;
+        }
+        else if (sock.data.region == "america"){
+          americacount -= 1;
+        }
+        else if (sock.data.region == "africa"){
+          africacount -= 1;
+        }
+
         console.log(`Force-logged out ${userId}`);
         break;
       }
@@ -131,6 +154,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("login", (id) => {
+
     currentUserId = id.toLowerCase();
     const existing = activeUsers.get(currentUserId);
 
@@ -143,12 +167,29 @@ io.on("connection", (socket) => {
     socket.join(currentUserId);
     startHeartbeat();
 
+    totalplayers += 1;
+    console.log("total players: ", totalplayers)
+    io.emit("playercount", totalplayers)
+    socket.emit("selectedservercount", JSON.stringify({
+      asia: asiacount,
+      za: africacount,
+      uae: uaecount,
+      us: americacount,
+      usw: americawestcount
+    }))
+
     console.log(`User ${currentUserId} logged in on ${socket.id}`);
   });
+
+  socket.on("selectregion", (region) => {
+    currentregion = region.toLowerCase();
+    addregion(currentregion)
+  })
 
   socket.on("disconnecting", (reason) => {
     console.log(`Disconnecting ${socket.id}, reason: ${reason}`);
     stopHeartbeat();
+    removeregion(currentregion)
 
     if (currentUserId && activeUsers.get(currentUserId) === socket.id) {
       activeUsers.delete(currentUserId);
@@ -156,9 +197,71 @@ io.on("connection", (socket) => {
     }
   });
 
+  const addregion = (region) => {
+    if (region== "asia"){
+      asiacount += 1;
+      console.log("asia count: ", asiacount)
+      io.emit("asiacount", asiacount)
+    }
+    else if (region == "uae"){
+      uaecount += 1;
+      console.log("uae count: ", uaecount)
+      io.emit("uaecount", uaecount)
+    }
+    else if (region == "us"){
+      americacount += 1;
+      console.log("us east count: ", americacount)
+      io.emit("americaeastcount", americacount)
+    }
+    else if (region == "usw"){
+      americacount += 1;
+      console.log("us west count: ", americawestcount)
+      io.emit("americawestcount", americawestcount)
+    }
+    else if (region == "za"){
+      africacount += 1;
+      console.log("africa count: ", africacount)
+      io.emit("africacount", africacount)
+    }
+
+    io.emit("playercount", totalplayers)
+  }
+
   socket.on("disconnect", (reason) => {
     console.log(`Socket ${socket.id} disconnected. Reason: ${reason}`);
   });
+
+  const removeregion = (region) => {
+    if (region== "asia"){
+      asiacount -= 1;
+      console.log("asia count: ", asiacount)
+      io.emit("asiacount", asiacount)
+    }
+    else if (region == "uae"){
+      uaecount -= 1;
+      console.log("uae count: ", uaecount)
+      io.emit("uaecount", uaecount)
+    }
+    else if (region == "us"){
+      americacount -= 1;
+      console.log("us east count: ", americacount)
+      io.emit("americaeastcount", americacount)
+    }
+    else if (region == "usw"){
+      americacount -= 1;
+      console.log("us west count: ", americawestcount)
+      io.emit("americawestcount", americawestcount)
+    }
+    else if (region == "za"){
+      africacount -= 1;
+      console.log("africa count: ", africacount)
+      io.emit("africacount", africacount)
+    }
+
+    totalplayers -= 1
+
+    io.emit("playercount", totalplayers)
+  }
 });
 
 // Routes
