@@ -186,6 +186,18 @@ io.on("connection", (socket) => {
     addregion(currentregion)
   })
 
+  socket.on("changeregion", (regiondata) => {
+    const tempregion = JSON.parse(regiondata)
+
+    console.log(tempregion)
+
+    if (tempregion.oldregion != tempregion.newregion){
+    console.log(tempregion.oldregion != tempregion.newregion)
+      removeregionwithoutplayercount(tempregion.oldregion)
+      addregionwithoutplayercount(tempregion.newregion)
+    }
+  })
+
   socket.on("disconnecting", (reason) => {
     console.log(`Disconnecting ${socket.id}, reason: ${reason}`);
     stopHeartbeat();
@@ -227,6 +239,34 @@ io.on("connection", (socket) => {
     io.emit("playercount", totalplayers)
   }
 
+  const addregionwithoutplayercount = (region) => {
+    if (region== "asia"){
+      asiacount += 1;
+      console.log("asia count: ", asiacount)
+      io.emit("asiacount", asiacount)
+    }
+    else if (region == "uae"){
+      uaecount += 1;
+      console.log("uae count: ", uaecount)
+      io.emit("uaecount", uaecount)
+    }
+    else if (region == "us"){
+      americacount += 1;
+      console.log("us east count: ", americacount)
+      io.emit("americaeastcount", americacount)
+    }
+    else if (region == "usw"){
+      americacount += 1;
+      console.log("us west count: ", americawestcount)
+      io.emit("americawestcount", americawestcount)
+    }
+    else if (region == "za"){
+      africacount += 1;
+      console.log("africa count: ", africacount)
+      io.emit("africacount", africacount)
+    }
+  }
+
   socket.on("disconnect", (reason) => {
     console.log(`Socket ${socket.id} disconnected. Reason: ${reason}`);
   });
@@ -261,6 +301,34 @@ io.on("connection", (socket) => {
     totalplayers -= 1
 
     io.emit("playercount", totalplayers)
+  }
+
+  const removeregionwithoutplayercount = (region) => {
+    if (region== "asia"){
+      asiacount -= 1;
+      console.log("asia count: ", asiacount)
+      io.emit("asiacount", asiacount)
+    }
+    else if (region == "uae"){
+      uaecount -= 1;
+      console.log("uae count: ", uaecount)
+      io.emit("uaecount", uaecount)
+    }
+    else if (region == "us"){
+      americacount -= 1;
+      console.log("us east count: ", americacount)
+      io.emit("americaeastcount", americacount)
+    }
+    else if (region == "usw"){
+      americacount -= 1;
+      console.log("us west count: ", americawestcount)
+      io.emit("americawestcount", americawestcount)
+    }
+    else if (region == "za"){
+      africacount -= 1;
+      console.log("africa count: ", africacount)
+      io.emit("africacount", africacount)
+    }
   }
 });
 
