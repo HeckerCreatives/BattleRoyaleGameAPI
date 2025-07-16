@@ -7,6 +7,7 @@ const routers = app => {
     app.use("/leaderboard", require("./leaderboard"))
     app.use("/sociallinks", require("./sociallinks"))
     app.use("/usergamedetail", require("./usergamedetails"))
+    app.use("/season", require("./season"))
 }
 
 module.exports = routers
