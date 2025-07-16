@@ -140,3 +140,19 @@ exports.useenergy = async (req, res) => {
 
     return res.json({message: "success"})
 }
+
+exports.refundenergy = async (req, res) => {
+    const {id, username} = req.user
+
+    const energydata = await Energy.findOne({owner: new mongoose.Types.ObjectId(id)})
+
+    if (!energydata){
+        return res.status(400).json({ message: "failed", data: "There's a problem with your account. Please contact customer support for more details" })
+    }
+
+    if (energydata.energy < 10){
+        await Energy.findOneAndUpdate({owner: new mongoose.Types.ObjectId(id)}, {$inc: { energy: 1}})
+    }
+
+    return res.json({message: "success"})
+}

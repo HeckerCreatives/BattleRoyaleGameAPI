@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { getusergamedetails, updateusergamedetails, checkingamemaintenance, useenergy } = require("../controllers/usergamedetails")
+const { getusergamedetails, updateusergamedetails, checkingamemaintenance, useenergy, refundenergy } = require("../controllers/usergamedetails")
 const { protectplayer } = require("../middleware/middleware")
 
 router
@@ -7,5 +7,6 @@ router
     .get("/checkingamemaintenance", protectplayer, checkingamemaintenance)
     .post("/updateusergamedetails", protectplayer, updateusergamedetails)
     .post("/useenergy", protectplayer, useenergy)
+    .post("/refundenergy", protectplayer, refundenergy)
     
 module.exports = router;
