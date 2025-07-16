@@ -300,6 +300,9 @@ io.on("connection", (socket) => {
 
     totalplayers -= 1
 
+    if (totalplayers <= 0){
+      totalplayers = 0;
+    }
     io.emit("playercount", totalplayers)
   }
 
