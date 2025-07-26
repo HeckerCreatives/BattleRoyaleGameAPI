@@ -402,6 +402,7 @@ io.on("connection", (socket) => {
   const notifyplayersformatchstatus = (match) => {
     match.players.forEach(playerSocketId => {
         const playerSocket = io.sockets.sockets.get(playerSocketId);
+        console.log(`have player ${playerSocket}`)
         if (playerSocket) {
           playerSocket.emit("matchstatuschanged", {
             roomName: match.roomName,
