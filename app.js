@@ -455,12 +455,16 @@ function launchGameServer(roomName) {
   child.on("exit", (code, signal) => {
     console.log(`Server for room "${roomName}" exited (code: ${code}, signal: ${signal})`);
     delete activeMatches[roomName];
+    const index = matches.findIndex(m => m.roomName === roomName);
+    if (index !== -1) matches.splice(index, 1);
   });
 
   // Optional: listen for errors
   child.on("error", (err) => {
     console.error(`Error launching server for room "${roomName}":`, err);
     delete activeMatches[roomName];
+    const index = matches.findIndex(m => m.roomName === roomName);
+    if (index !== -1) matches.splice(index, 1);
   });
 }
 
