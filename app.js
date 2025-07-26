@@ -389,7 +389,7 @@ function launchGameServer(roomName) {
     "/ROF/Rof_Server.x86_64",
     "-batchmode",
     "-nographics",
-    "-logfile", `/ROF/logs/${roomName}.log`,
+    "-logFile", `$$log_dir$$/${roomName}.log`,
     "-region", "asia",
     "-server", "yes",
     "-mapname", "PrototypeMultiplayer",
