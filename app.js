@@ -4,7 +4,10 @@ const bodyParser = require("body-parser");
 const http = require("http");
 const cors = require("cors");
 const socketIo = require("socket.io");
+const { customAlphabet } = require("nanoid");
 require("dotenv").config();
+const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
+const { spawn } = require("child_process");
 
 const {gameserverinit} = require("./Initialize/init")
 
@@ -18,6 +21,9 @@ const corsConfig = {
     credentials: true, // Allowed Headers to be received
 };
 
+function generateRoomName() {
+  return "room_" + nanoid();
+}
 let asiacount = 0
 let uaecount = 0
 let americacount = 0
@@ -70,9 +76,13 @@ const MAX_MISSED_PINGS = 3;
 const activeUsers = new Map();          // userId -> socket.id
 const socketHeartbeats = new Map();     // socket.id -> { interval, timeout, missedPings }
 
+let matches = []
+
 io.on("connection", (socket) => {
   let currentUserId = null;
   let currentregion = null;
+
+//  #region LOGIN AND LOGOUT
 
   const startHeartbeat = () => {
     const heartbeatData = {
@@ -269,6 +279,10 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", (reason) => {
     console.log(`Socket ${socket.id} disconnected. Reason: ${reason}`);
+    for (const match of matches) {
+      const index = match.players.indexOf(socket.id);
+      if (index !== -1) match.players.splice(index, 1);
+    }
   });
 
   const removeregion = (region) => {
@@ -333,7 +347,62 @@ io.on("connection", (socket) => {
       io.emit("africacount", africacount)
     }
   }
+
+//  #endregion
+
+//  #region MATCHES
+
+  socket.on("findmatch", async() => {
+    let match = matches.find(m => m.status === "WAITING" && m.players.length < m.maxPlayers);
+
+    if (!match){
+      const roomName = generateRoomName();
+      launchGameServer(roomName)
+      match = {
+        roomName,
+        status: "WAITING",
+        players: [],
+        maxPlayers: 50
+      };
+
+      matches.push(match);
+    }
+
+    match.players.push(socket.id);
+    socket.emit("matchfound", {
+      matchname: match.roomName
+    });
+
+    if (match.players.length >= match.maxPlayers) {
+      match.status = "IN_PROGRESS";
+    }
+  })
+
+//  #endregion
+
 });
+
+function launchGameServer(roomName) {
+  const args = [
+    "-a",
+    "/ROF/Rof_Server.x86_64",
+    "-batchmode",
+    "-nographics",
+    "-logfile", `/ROF/logs/${roomName}.log`,
+    "-region", "asia",
+    "-server", "yes",
+    "-mapname", "PrototypeMultiplayer",
+    "-roomname", roomName
+  ];
+
+  spawn("xvfb-run", args, {
+    cwd: "/ROF",
+    detached: true,
+    stdio: "ignore"
+  }).unref();
+
+  console.log(`Launched Fusion server with room: ${roomName}`);
+}
 
 // Routes
 require("./routes")(app);
