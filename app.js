@@ -395,7 +395,12 @@ io.on("connection", (socket) => {
     console.log(`Match "${matchname}" status changed to "${matchstatus}"`);
     if (matchstatus === "WAITING") {
       // Notify all players in the match
-      match.players.forEach(playerSocketId => {
+      notifyplayersformatchstatus(match)
+    }
+  });
+
+  const notifyplayersformatchstatus = (match) => {
+    match.players.forEach(playerSocketId => {
         const playerSocket = io.sockets.sockets.get(playerSocketId);
         if (playerSocket) {
           playerSocket.emit("matchstatuschanged", {
@@ -403,9 +408,8 @@ io.on("connection", (socket) => {
             status: match.status
           });
         }
-      });
-    }
-  });
+    });
+  }
 
   socket.on("quitonmatch", async() => {
     const match = matches.find(m => m.players.includes(socket.id));
