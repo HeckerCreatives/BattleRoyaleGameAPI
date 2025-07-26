@@ -4,7 +4,7 @@ const bodyParser = require("body-parser");
 const http = require("http");
 const cors = require("cors");
 const socketIo = require("socket.io");
-const { customAlphabet } = require("nanoid");
+const { customAlphabet } = require("nanoid-good");
 require("dotenv").config();
 const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
 const { spawn } = require("child_process");
