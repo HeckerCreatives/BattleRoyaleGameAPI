@@ -460,7 +460,6 @@ function launchGameServer(roomName) {
     delete activeMatches[roomName];
   });
 }
-// setInterval(cleanupTerminatedMatches, 3000);
 
 // Routes
 require("./routes")(app);
