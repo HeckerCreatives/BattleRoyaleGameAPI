@@ -437,8 +437,10 @@ function launchGameServer(roomName) {
     cwd: "/ROF",
     detached: true,
     stdio: "ignore"
-  }).unref();
+  });
 
+  child.unref(); // <-- Call this separately
+  
   activeMatches[roomName] = {
     pid: child.pid,
     roomName,
