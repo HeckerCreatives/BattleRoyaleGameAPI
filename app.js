@@ -6,7 +6,7 @@ const cors = require("cors");
 const socketIo = require("socket.io");
 const { customAlphabet } = require("nanoid-good");
 require("dotenv").config();
-const nanoid = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
+const nanoid = customAlphabet(12, "abcdefghijklmnopqrstuvwxyz0123456789");
 const { spawn } = require("child_process");
 
 const {gameserverinit} = require("./Initialize/init")
