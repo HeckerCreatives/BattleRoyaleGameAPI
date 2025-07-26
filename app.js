@@ -8,7 +8,7 @@ var en = require("nanoid-good/locale/en")
 var customAlphabet = require("nanoid-good").customAlphabet(en);
 require("dotenv").config();
 const generatedname = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
-const { spawn } = require("child_process");
+const { spawn, execSync } = require("child_process");
 
 const {gameserverinit} = require("./Initialize/init")
 
@@ -80,6 +80,7 @@ const activeUsers = new Map();          // userId -> socket.id
 const socketHeartbeats = new Map();     // socket.id -> { interval, timeout, missedPings }
 
 let matches = []
+const activeMatches = {};
 
 io.on("connection", (socket) => {
   let currentUserId = null;
@@ -398,14 +399,34 @@ function launchGameServer(roomName) {
     "-roomname", roomName
   ];
 
-  spawn("xvfb-run", args, {
+  const child = spawn("xvfb-run", args, {
     cwd: "/ROF",
     detached: true,
     stdio: "ignore"
   }).unref();
 
+  activeMatches[roomName] = {
+    pid: child.pid,
+    roomName,
+    logPath,
+    launchedAt: Date.now()
+  };
+
   console.log(`Launched Fusion server with room: ${roomName}`);
+
+  // 🧼 Cleanup on exit
+  child.on("exit", (code, signal) => {
+    console.log(`Server for room "${roomName}" exited (code: ${code}, signal: ${signal})`);
+    delete activeMatches[roomName];
+  });
+
+  // Optional: listen for errors
+  child.on("error", (err) => {
+    console.error(`Error launching server for room "${roomName}":`, err);
+    delete activeMatches[roomName];
+  });
 }
+setInterval(cleanupTerminatedMatches, 3000);
 
 // Routes
 require("./routes")(app);
