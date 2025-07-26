@@ -384,12 +384,14 @@ io.on("connection", (socket) => {
 });
 
 function launchGameServer(roomName) {
+  const logPath = `/ROF/logs/${roomName}.log`;
+
   const args = [
     "-a",
-    "/ROF/Rof_Server.x86_64",
+    "./Rof_Server.x86_64",
     "-batchmode",
     "-nographics",
-    "-logFile", `$$log_dir$$/${roomName}.log`,
+    "-logfile", logPath,
     "-region", "asia",
     "-server", "yes",
     "-mapname", "PrototypeMultiplayer",
