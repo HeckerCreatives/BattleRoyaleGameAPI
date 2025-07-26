@@ -4,9 +4,10 @@ const bodyParser = require("body-parser");
 const http = require("http");
 const cors = require("cors");
 const socketIo = require("socket.io");
-const { customAlphabet } = require("nanoid-good");
+var en = require("nanoid-good/locale/en")
+var customAlphabet = require("nanoid-good").customAlphabet(en);
 require("dotenv").config();
-const nanoid = customAlphabet(12, "abcdefghijklmnopqrstuvwxyz0123456789");
+const generatedname = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
 const { spawn } = require("child_process");
 
 const {gameserverinit} = require("./Initialize/init")
@@ -24,7 +25,7 @@ const corsConfig = {
 };
 
 function generateRoomName() {
-  return "room_" + nanoid();
+  return "room_" + generatedname();
 }
 let asiacount = 0
 let uaecount = 0
