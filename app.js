@@ -14,6 +14,7 @@ const {gameserverinit} = require("./Initialize/init")
 
 const app = express();
 
+
 const corsConfig = {
     origin: [""],
     methods: ["GET", "POST", "PUT", "DELETE"], // List only` available methods
