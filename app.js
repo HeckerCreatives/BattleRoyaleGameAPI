@@ -372,9 +372,7 @@ io.on("connection", (socket) => {
     }
 
     match.players.push(socket.id);
-    socket.emit("matchfound", {
-      matchname: match.roomName
-    });
+    socket.emit("matchfound", match.roomName);
 
     if (match.players.length >= match.maxPlayers) {
       match.status = "IN_PROGRESS";
