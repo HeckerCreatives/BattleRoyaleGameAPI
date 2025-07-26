@@ -357,14 +357,14 @@ io.on("connection", (socket) => {
 //  #region MATCHES
 
   socket.on("findmatch", async() => {
-    let match = matches.find(m => m.status === "WAITING" && m.players.length < m.maxPlayers);
+    let match = matches.find(m => (m.status === "WAITING" || m.status === "SETTINGUP") && m.players.length < m.maxPlayers);
 
     if (!match){
       const roomName = generateRoomName();
       launchGameServer(roomName)
       match = {
         roomName,
-        status: "WAITING",
+        status: "SETTINGUP",
         players: [],
         maxPlayers: 50
       };
@@ -373,11 +373,45 @@ io.on("connection", (socket) => {
     }
 
     match.players.push(socket.id);
-    socket.emit("matchfound", match.roomName);
 
-    if (match.players.length >= match.maxPlayers) {
-      match.status = "IN_PROGRESS";
+    if (match.status == "WAITING"){
+      socket.emit("matchfound", match.roomName);
     }
+  })
+
+  socket.on("changematchstate", async(data) => {
+    const matchdata = JSON.parse(data)
+    const matchname = matchdata.sessionname
+    const matchstatus = matchdata.status
+    const match = matches.find(m => m.roomName === matchname);
+
+    if (!match){
+      console.warn(`No match found with roomName: ${matchname}`);
+      return;
+    }
+
+    match.status = matchstatus;
+    console.log(`Match "${matchname}" status changed to "${matchstatus}"`);
+    if (matchstatus === "WAITING") {
+      // Notify all players in the match
+      match.players.forEach(playerSocketId => {
+        const playerSocket = io.sockets.sockets.get(playerSocketId);
+        if (playerSocket) {
+          playerSocket.emit("matchstatuschanged", {
+            roomName: match.roomName,
+            status: match.status
+          });
+        }
+      });
+    }
+  });
+
+  socket.on("quitonmatch", async() => {
+    const match = matches.find(m => m.players.includes(socket.id));
+
+    if (!match) return; // Not in any match
+
+    match.players = match.players.filter(id => id !== socket.id);
   })
 
 //  #endregion
