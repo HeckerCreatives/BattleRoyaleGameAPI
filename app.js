@@ -381,6 +381,7 @@ io.on("connection", (socket) => {
 
   socket.on("changematchstate", async(data) => {
     const matchdata = JSON.parse(data)
+    console.log(matchdata)
     const matchname = matchdata.sessionname
     const matchstatus = matchdata.status
     const match = matches.find(m => m.roomName === matchname);
