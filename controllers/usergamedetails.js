@@ -178,6 +178,8 @@ exports.getmatchhistory = async (req, res) => {
         return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
     })
 
+    console.log(tempdata)
+
     const data = {}
     let index = 0
 
