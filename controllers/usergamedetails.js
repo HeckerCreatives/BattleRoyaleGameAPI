@@ -171,13 +171,15 @@ exports.getmatchhistory = async (req, res) => {
     
     const tempdata = Matchhistory.find({owner: new mongoose.Types.ObjectId(id)})
     .limit(limit)
+    .sort({createdAt: -1})
     .then(data => data)
     .catch(err => {
         console.log(`There's a problem getting match history data ${err}`)
         return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
     })
 
-    const data = []
+    const data = {}
+    let index = 0
 
     tempdata.forEach(data => {
         const {kill, placement, createdAt} = data
@@ -188,11 +190,13 @@ exports.getmatchhistory = async (req, res) => {
             day: '2-digit'
         });
 
-        data.push({
+        data[index] = {
             kill: kill,
             placement: placement,
             date: formattedDate
-        })
+        }
+
+        index++
     })
 
     return res.json({message: "success", data: data})
