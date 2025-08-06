@@ -63,7 +63,7 @@ exports.updateusergamedetails = async (req, res) => {
 
     const {id, username} = req.user
 
-    const { kill, death, rank, placement } = req.body
+    const { kill, death, rank } = req.body
     const usergamedata = await Usergamedetails.findOne({owner: new mongoose.Types.ObjectId(id)})
     .then(data => data)
     .catch(err => {
@@ -112,7 +112,7 @@ exports.updateusergamedetails = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem updating the user game details"})
     })
 
-    await Matchhistory.create({owner: new mongoose.Types.ObjectId(id), kill: kill, placement: placement})
+    await Matchhistory.create({owner: new mongoose.Types.ObjectId(id), kill: kill, placement: rank})
     .catch(err => {
         console.log(`There's a problem creating the user match game history for ${username}. Error: ${err}`)
 
