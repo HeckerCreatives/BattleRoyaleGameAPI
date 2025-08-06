@@ -177,10 +177,7 @@ exports.getmatchhistory = async (req, res) => {
         console.log(`There's a problem getting match history data ${err}`)
         return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
     })
-
-    console.log(tempdata)
-
-    const data = {}
+    const finaldata = {}
     let index = 0
 
     tempdata.forEach(data => {
@@ -192,7 +189,7 @@ exports.getmatchhistory = async (req, res) => {
             day: '2-digit'
         });
 
-        data[index] = {
+        finaldata[index] = {
             kill: kill,
             placement: placement,
             date: formattedDate
@@ -201,5 +198,5 @@ exports.getmatchhistory = async (req, res) => {
         index++
     })
 
-    return res.json({message: "success", data: data})
+    return res.json({message: "success", data: finaldata})
 }
