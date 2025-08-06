@@ -163,3 +163,37 @@ exports.refundenergy = async (req, res) => {
 
     return res.json({message: "success"})
 }
+
+exports.getmatchhistory = async (req, res) => {
+    const {id, username} = req.user;
+
+    const {limit} = req.query
+    
+    const tempdata = Matchhistory.find({owner: new mongoose.Types.ObjectId(id)})
+    .limit(limit)
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting match history data ${err}`)
+        return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    const data = []
+
+    tempdata.forEach(data => {
+        const {kill, placement, createdAt} = data
+
+        const formattedDate = createdAt.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: '2-digit'
+        });
+
+        data.push({
+            kill: kill,
+            placement: placement,
+            date: formattedDate
+        })
+    })
+
+    return res.json({message: "success", data: data})
+}
