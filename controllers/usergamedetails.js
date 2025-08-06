@@ -169,7 +169,7 @@ exports.getmatchhistory = async (req, res) => {
 
     const {limit} = req.query
     
-    const tempdata = Matchhistory.find({owner: new mongoose.Types.ObjectId(id)})
+    const tempdata = await Matchhistory.find({owner: new mongoose.Types.ObjectId(id)})
     .limit(limit)
     .sort({createdAt: -1})
     .then(data => data)
