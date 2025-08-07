@@ -11,7 +11,7 @@ exports.getleaderboard = async (req, res) => {
         select: "username"
     })
     .limit(50)
-    .sort({amount: -1})
+    .sort({amount: -1, updatedAt: -1})
     .then(data => data)
     .catch(err => {
         console.log(`There's a problem getting the leaderboard`)
@@ -76,7 +76,7 @@ exports.getkillleaderboard = async (req, res) => {
         select: "username"
     })
     .limit(50)
-    .sort({kill: -1})
+    .sort({kill: -1, updatedAt: -1})
     .then(data => data)
     .catch(err => {
         console.log(`There's a problem getting the leaderboard`)
@@ -117,7 +117,7 @@ exports.getdeathleaderboard = async (req, res) => {
         select: "username"
     })
     .limit(50)
-    .sort({death: -1})
+    .sort({death: -1, updatedAt: -1})
     .then(data => data)
     .catch(err => {
         console.log(`There's a problem getting the leaderboard`)
