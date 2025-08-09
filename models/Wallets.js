@@ -7,16 +7,21 @@ const walletSchema = new mongoose.Schema(
             ref: "Users"
         },
         type: {
-            type: String
+            type: String,
+            required: true
         },
         amount: {
-            type: Number
+            type: Number,
+            default: 0
         }
     },
     {
         timestamps: true
     }
 )
+
+// Index for efficient queries
+walletSchema.index({ owner: 1, type: 1 });
 
 const Wallets = mongoose.model("Wallets", walletSchema)
 module.exports = Wallets

@@ -106,10 +106,10 @@ exports.register = async (req, res) => {
         return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
     })
 
-    const walletListData = ["credits", "token"]
+    const walletListData = ["POINTS", "COINS"]
     const walletBulkWrite = walletListData.map(walletData => ({
         insertOne: {
-            document: { owner: user._id, type: walletData, value: "0" }
+            document: { owner: user._id, type: walletData, amount: 0 }
         }
     }));
 

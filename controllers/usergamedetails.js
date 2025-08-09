@@ -4,6 +4,7 @@ const Leaderboard = require("../models/Leaderboard")
 const Maintenance = require("../models/Maintenance")
 const Energy = require("../models/Energy")
 const Matchhistory = require("../models/Matchhistory")
+const ActiveEffects = require("../models/ActiveEffects")
 const {getsecondsuntilmidnight} = require("../utils/datetime")
 
 exports.getusergamedetails = async (req, res) => {
@@ -74,16 +75,35 @@ exports.updateusergamedetails = async (req, res) => {
 
     let level = usergamedata.level
 
-
+    // Calculate base XP
     let xpearned = ((parseInt(level) / 2) * 3) + (((100 - parseInt(rank) + 1) / 100) * 20) + 
     (parseInt(kill) * ((parseInt(level)/ 4) + 1))
 
+    // Check for active XP effects
+    await ActiveEffects.updateMany(
+        { 
+            owner: new mongoose.Types.ObjectId(id),
+            expiresAt: { $lt: new Date() },
+            isActive: true
+        },
+        { isActive: false }
+    );
+
+    const activeXPEffect = await ActiveEffects.findOne({
+        owner: new mongoose.Types.ObjectId(id),
+        type: "potion",
+        isActive: true,
+        expiresAt: { $gt: new Date() }
+    });
+
+    // Apply XP multiplier if active
+    if (activeXPEffect) {
+        xpearned *= activeXPEffect.multiplier;
+    }
+
     let newxp = usergamedata.xp + xpearned
-
     let newlevel = level
-
     let expneeded = 80 * level
-
     let newKills = usergamedata.kill + kill
     let newDeaths = usergamedata.death + death
 
@@ -119,7 +139,14 @@ exports.updateusergamedetails = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem updating the user match game history"})
     })
 
-    return res.json({message: "success", data: data})
+    const responseData = {
+        ...data.toObject(),
+        xpEarned: Math.floor(xpearned),
+        multiplierApplied: activeXPEffect ? activeXPEffect.multiplier : 1,
+        effectName: activeXPEffect ? activeXPEffect.itemname : null
+    };
+
+    return res.json({message: "success", data: responseData})
 
 }
 
