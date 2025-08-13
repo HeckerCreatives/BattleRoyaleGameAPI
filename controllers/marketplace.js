@@ -439,7 +439,7 @@ exports.getuserwallets = async (req, res) => {
         // Ensure we have both points and coins
         const response = {
             points: userPoints,
-            coins: walletData.coins || 0
+            coins: walletData.COINS || 0
         };
 
         return res.json({ message: "success", data: response });
