@@ -205,8 +205,8 @@ exports.getuserinventory = async (req, res) => {
                 type: item.type,
                 quantity: item.quantity,
                 isEquipped: item.isEquipped,
-                canUse: item.type !== "TITLE" && item.quantity > 0,
-                canEquip: item.type === "TITLE",
+                canUse: item.type !== "title" && item.quantity > 0,
+                canEquip: item.type === "title",
                 canSell: false // Disable selling for now
             };
             return obj;

@@ -13,7 +13,9 @@ const Leaderboard = require("../models/Leaderboard");
 const Usergamedetails = require("../models/Usergamedetails");
 const Userdetails = require("../models/Userdetails");
 const Maintenance = require("../models/Maintenance")
-const Energy = require("../models/Energy")
+const Energy = require("../models/Energy");
+const { Titles, CharacterTitles } = require("../models/Titles");
+const Inventory = require("../models/Inventory");
 
 const encrypt = async password => {
     const salt = await bcrypt.genSalt(10);
@@ -59,84 +61,112 @@ exports.register = async (req, res) => {
         return res.status(400).json({ message: "bad-request", data: "Email has already been used."})
     }
 
-    const user = await Users.create({ username: username, password: password, gametoken: "", webtoken: "", bandate: "", banreason: "", status: "active" })
-    .then(data => data)
-    .catch(err => {
-        console.log(`Uh oh... there's a problem encountered while creating user login for ${username} Error: ${err}`)
+    // Start transaction session
+    const session = await mongoose.startSession();
+    session.startTransaction();
 
-        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again." })
-    })
-    await Userdetails.create({ owner: new mongoose.Types.ObjectId(user._id), email: email, country: country, profilepicture: "" })
-    .catch(async (err)=> {
-        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
-        
-        await Users.findOneAndDelete({ username: username})
+    try {
+        // Create main user account
+        const user = await Users.create([{ 
+            username: username, 
+            password: password, 
+            gametoken: "", 
+            webtoken: "", 
+            bandate: "", 
+            banreason: "", 
+            status: "active" 
+        }], { session });
 
-        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
-    })
+        const userId = new mongoose.Types.ObjectId(user[0]._id);
 
-    await Usergamedetails.create({ owner: new mongoose.Types.ObjectId(user._id), kill: 0, death: 0, level: 1, xp: 0})
-    .catch(async (err)=> {
-        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
-        
-        await Users.findOneAndDelete({ username: username})
-        await Userdetails.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-
-        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
-    })
-
-    await Leaderboard.create({ owner: new mongoose.Types.ObjectId(user._id), amount: 0})
-    .catch(async (err)=> {
-        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
-        
-        await Users.findOneAndDelete({ username: username})
-        await Usergamedetails.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-
-        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
-    })
-
-    await PlayerCharacterSetting.create({ owner: new mongoose.Types.ObjectId(user._id), hairstyle: 0, haircolor: 0, clothingcolor: 0, skincolor: 0})
-    .catch(async (err)=> {
-        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
-        
-        await Users.findOneAndDelete({ username: username })
-        await Usergamedetails.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-        await Leaderboard.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-
-        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
-    })
-
-    const walletListData = ["coins"]
-    const walletBulkWrite = walletListData.map(walletData => ({
-        insertOne: {
-            document: { owner: user._id, type: walletData, amount: 0 }
+        // Get default title data
+        const titlesdata = await Titles.findOne({ index: "TITLE-000" }).session(session);
+        if (!titlesdata) {
+            throw new Error("Default title data not found");
         }
-    }));
 
-    await Wallets.bulkWrite(walletBulkWrite)
-    .catch(async (err)=> {
-        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
-        
-        await Users.findOneAndDelete({ username: username })
-        await Usergamedetails.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-        await Leaderboard.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-        await PlayerCharacterSetting.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
+        // Create all user-related documents in parallel within the transaction
+        await Promise.all([
+            // User details
+            Userdetails.create([{ 
+                owner: userId, 
+                email: email, 
+                country: country, 
+                profilepicture: "" 
+            }], { session }),
 
-        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
-    })
+            // User game details
+            Usergamedetails.create([{ 
+                owner: userId, 
+                kill: 0, 
+                death: 0, 
+                level: 1, 
+                xp: 0 
+            }], { session }),
 
-    await Energy.create({owner: new mongoose.Types.ObjectId(user._id), energy: 10}).catch(async (err)=> {
-        console.log(`There's a problem creating user details for ${username} Error: ${err}`)
-        
-        await Users.findOneAndDelete({ username: username })
-        await Usergamedetails.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-        await Leaderboard.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
-        await PlayerCharacterSetting.findOneAndDelete({owner: new mongoose.Types.ObjectId(user._id)})
+            // Leaderboard entry
+            Leaderboard.create([{ 
+                owner: userId, 
+                amount: 0 
+            }], { session }),
 
-        return res.status(400).json({ message: "bad-request", data: "There's a problem in registering account. Please try again."})
-    })
+            // Player character settings
+            PlayerCharacterSetting.create([{ 
+                owner: userId, 
+                hairstyle: 0, 
+                haircolor: 0, 
+                clothingcolor: 0, 
+                skincolor: 0 
+            }], { session }),
 
-    return res.json({ message: "success" })
+            // Energy
+            Energy.create([{ 
+                owner: userId, 
+                energy: 10 
+            }], { session }),
+
+            // Character titles
+            CharacterTitles.create([{ 
+                owner: userId, 
+                title: titlesdata._id 
+            }], { session }),
+
+            // Default title in inventory
+            Inventory.create([{ 
+                owner: userId, 
+                itemid: titlesdata.index, 
+                itemname: titlesdata.name, 
+                quantity: 1, 
+                type: "title", 
+                isEquipped: true, 
+            }], { session }),
+
+            // Default wallet
+            Wallets.create([{ 
+                owner: userId, 
+                type: "coins", 
+                amount: 0 
+            }], { session })
+        ]);
+
+        // Commit the transaction
+        await session.commitTransaction();
+        session.endSession();
+
+        console.log(`Successfully created user account for ${username}`);
+        return res.json({ message: "success" });
+
+    } catch (err) {
+        // Rollback the transaction
+        await session.abortTransaction();
+        session.endSession();
+
+        console.log(`Error creating user account for ${username}: ${err.message}`);
+        return res.status(400).json({ 
+            message: "bad-request", 
+            data: "There's a problem in registering account. Please try again." 
+        });
+    }
 
 }
 
