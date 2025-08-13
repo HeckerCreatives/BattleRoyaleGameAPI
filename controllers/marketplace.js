@@ -431,6 +431,8 @@ exports.getuserwallets = async (req, res) => {
         // Get all wallets using utility
         const walletData = await walletUtils.getAllWallets(id);
 
+        console.log(walletData)
+
         // Get leaderboard points using utility
         const userPoints = await leaderboardUtils.checkPoints(id);
         
