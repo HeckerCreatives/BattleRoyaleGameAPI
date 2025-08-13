@@ -431,7 +431,6 @@ exports.getuserwallets = async (req, res) => {
         // Get all wallets using utility
         const walletData = await walletUtils.getAllWallets(id);
 
-        console.log(walletData)
 
         // Get leaderboard points using utility
         const userPoints = await leaderboardUtils.checkPoints(id);
@@ -439,7 +438,7 @@ exports.getuserwallets = async (req, res) => {
         // Ensure we have both points and coins
         const response = {
             points: userPoints,
-            coins: walletData.COINS || 0
+            coins: walletData.coins || 0
         };
 
         return res.json({ message: "success", data: response });
@@ -533,7 +532,19 @@ exports.sellitem = async (req, res) => {
     const item = await Marketplace.findOne({ itemid });
     const sellprice = (item.amount * 0.5) * quantity;
 
-    await walletUtils.updateWallet(id, "coins", sellprice);
+
+    switch (item.currency){
+        case "coins":
+            await walletUtils.updateWallet(id, "coins", sellprice);
+          break;
+
+        case "points":
+            await leaderboardUtils.addPoints(id, sellprice);
+            break;
+
+        default:
+            return res.status(400).json({ message: "bad-request", data: "Invalid currency type." });
+    }
 
     await inventoryUtils.removeItem(id, itemid, quantity);
 
@@ -544,8 +555,8 @@ exports.sellitem = async (req, res) => {
         itemid: item.itemid,
         itemname: item.itemname,
         amount: sellprice,
-        currency: "coins",
-        description: `Sold ${quantity}x ${item.itemname} for ${sellprice} coins.`,
+        currency: item.currency,
+        description: `Sold ${quantity}x ${item.itemname} for ${sellprice} ${item.currency}.`,
     });
 
     await transaction.save();

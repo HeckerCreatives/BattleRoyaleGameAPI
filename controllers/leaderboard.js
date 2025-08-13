@@ -33,7 +33,7 @@ exports.getleaderboard = async (req, res) => {
         const {owner, amount} = tempdata
 
         data.leaderboard[tempindex] = {
-            user: owner.username,
+            user: owner.username || "Unknown",
             amount: amount
         };
 
