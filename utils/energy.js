@@ -90,7 +90,7 @@ exports.updateEnergy = async (userId, amount, session = null) => {
         let newAmount = energy.energy + amount;
         
         // Cap between 0 and 20
-        newAmount = Math.max(0, Math.min(20, newAmount));
+        // newAmount = Math.max(0, Math.min(20, newAmount)); NO CAP ANYMORE
         
         return await Energy.findOneAndUpdate(
             { owner: ownerId },
