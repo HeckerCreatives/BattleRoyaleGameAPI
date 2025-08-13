@@ -76,7 +76,7 @@ exports.buymarketplaceitem = async (req, res) => {
         let currentWalletAmount = 0;
 
         if (item.currency === "coins") {
-            currentWalletAmount = await walletUtils.checkWallet(id, item.currency.toUpperCase());
+            currentWalletAmount = await walletUtils.checkWallet(id, item.currency)
         } else if (item.currency === "points") {
             currentWalletAmount = await leaderboardUtils.checkPoints(id);
         } else {
