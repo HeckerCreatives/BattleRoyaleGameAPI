@@ -9,8 +9,16 @@ var customAlphabet = require("nanoid-good").customAlphabet(en);
 require("dotenv").config();
 const generatedname = customAlphabet("abcdefghijklmnopqrstuvwxyz0123456789", 12);
 const { spawn, execSync } = require("child_process");
+const AWS = require('aws-sdk');
 
 const {gameserverinit} = require("./Initialize/init")
+
+const fleetIdsByRegion = {
+  'us-east-1': 'fleet-123abc',
+  'us-west-2': 'fleet-456def',
+  'asia': 'fleet-789ghi',
+  'eu-central-1': 'fleet-321xyz'
+};
 
 
 const app = express();
@@ -358,17 +366,35 @@ io.on("connection", (socket) => {
 
 //  #region MATCHES
 
-  socket.on("findmatch", async() => {
-    let match = matches.find(m => (m.status === "WAITING" || m.status === "SETTINGUP") && m.players.length < m.maxPlayers);
+  // --- FIND MATCH ---
+  socket.on("findmatch", async (data) => {
+    const matchdata = JSON.parse(data);
+    const selectedRegion = matchdata.region;
 
-    if (!match){
+    socket.selectedRegion = selectedRegion;
+
+    // Find match in the same region
+    let match = matches.find(m =>
+      (m.status === "WAITING" || m.status === "SETTINGUP") &&
+      m.players.length < m.maxPlayers &&
+      m.region === selectedRegion
+    );
+
+    if (!match) {
       const roomName = generateRoomName();
-      launchGameServer(roomName)
+
+      if (process.env.GAMELIFT_SERVER) {
+        await launchGameLiftServer(roomName, selectedRegion);
+      } else {
+        launchGameServer(roomName);
+      }
+
       match = {
         roomName,
         status: "SETTINGUP",
         players: [],
-        maxPlayers: 50
+        maxPlayers: 50,
+        region: selectedRegion
       };
 
       matches.push(match);
@@ -376,36 +402,38 @@ io.on("connection", (socket) => {
 
     match.players.push(socket.id);
 
-    if (match.status == "WAITING"){
+    if (match.status === "WAITING") {
       socket.emit("matchfound", match.roomName);
     }
-  })
+  });
 
-  socket.on("changematchstate", async(data) => {
-    const matchdata = JSON.parse(data)
-    console.log(matchdata)
-    const matchname = matchdata.sessioname
-    const matchstatus = matchdata.status
+  // --- CHANGE MATCH STATE ---
+  socket.on("changematchstate", async (data) => {
+    const matchdata = JSON.parse(data);
+    const matchname = matchdata.sessioname;
+    const matchstatus = matchdata.status;
+
     const match = matches.find(m => m.roomName === matchname);
 
-    if (!match){
+    if (!match) {
       console.warn(`No match found with roomName: ${matchname}`);
       return;
     }
 
     match.status = matchstatus;
     console.log(`Match "${matchname}" status changed to "${matchstatus}"`);
+
     if (matchstatus === "WAITING") {
-      // Notify all players in the match
-      notifyplayersformatchstatus(match)
+      notifyplayersformatchstatus(match);
     }
   });
 
+  
   const notifyplayersformatchstatus = (match) => {
     match.players.forEach(playerSocketId => {
         const playerSocket = io.sockets.sockets.get(playerSocketId);
         console.log(`have player ${playerSocket}`)
-        if (playerSocket) {
+        if (playerSocket && playerSocket.selectedRegion === match.region) {
           playerSocket.emit("matchstatuschanged", {
             roomName: match.roomName,
             status: match.status
@@ -414,17 +442,71 @@ io.on("connection", (socket) => {
     });
   }
 
-  socket.on("quitonmatch", async() => {
+  // --- QUIT MATCH ---
+  socket.on("quitonmatch", async () => {
     const match = matches.find(m => m.players.includes(socket.id));
 
-    if (!match) return; // Not in any match
+    if (!match) return;
 
     match.players = match.players.filter(id => id !== socket.id);
-  })
+
+    // Optional: delete match if empty
+    if (match.players.length === 0) {
+      console.log(`Match "${match.roomName}" is now empty, removing.`);
+      matches = matches.filter(m => m.roomName !== match.roomName);
+
+      if (activeMatches[match.roomName]) {
+        // TODO: terminate GameLift session if needed
+        delete activeMatches[match.roomName];
+      }
+    }
+  });
 
 //  #endregion
 
 });
+
+//  #region GAME LIFT SERVER INSTANCE
+
+function getGameLiftClient(region) {
+  return new AWS.GameLift({
+    region: region,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+  });
+}
+
+async function launchGameLiftServer(roomName, region) {
+  const gamelift = getGameLiftClient(region);
+
+  try {
+    const createSessionRes = await gamelift.createGameSession({
+      FleetId: fleetIdsByRegion[region], // map region to fleet
+      MaximumPlayerSessionCount: 50,
+      GameProperties: [
+        { Key: 'roomname', Value: roomName },
+        { Key: 'mapname', Value: 'PrototypeMultiplayer' },
+      ]
+    }).promise();
+
+    const gameSession = createSessionRes.GameSession;
+    console.log(`[${region}] Game session created: ${gameSession.GameSessionId}`);
+
+    activeMatches[roomName] = {
+      roomName,
+      gameSessionId: gameSession.GameSessionId,
+      region,
+      createdAt: Date.now()
+    };
+
+  } catch (err) {
+    console.error(`[${region}] Error creating game session:`, err);
+  }
+}
+
+//  #endregion
+
+//  #region DIGITALOCEAN DROPLET SERVER
 
 function launchGameServer(roomName) {
   const logPath = `/ROF/logs/${roomName}.log`;
@@ -474,6 +556,10 @@ function launchGameServer(roomName) {
     if (index !== -1) matches.splice(index, 1);
   });
 }
+
+//  #endregion
+
+
 
 //  #endregion
 
