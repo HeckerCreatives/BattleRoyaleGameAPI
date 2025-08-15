@@ -122,7 +122,7 @@ exports.register = async (req, res) => {
             // Energy
             Energy.create([{ 
                 owner: userId, 
-                energy: 10 
+                energy: 20
             }], { session }),
 
             // Character titles
