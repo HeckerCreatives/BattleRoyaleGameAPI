@@ -23,17 +23,6 @@ const corsConfig = {
     allowedHeaders: ["Origin", "Content-Type", "X-Requested-With", "Accept", "Authorization"],
     credentials: true, // Allowed Headers to be received
 };
-
-function generateRoomName() {
-  return "room_" + generatedname();
-}
-let asiacount = 0
-let uaecount = 0
-let americacount = 0
-let americawestcount = 0
-let africacount = 0
-let totalplayers = 0
-
 app.use(cors(corsConfig));
 const server = http.createServer(app);
 
@@ -54,6 +43,19 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: false, parameterLimit: 
 
 
 const {userlogout} = require("./utils/auth")
+
+//  #region SOCKET ROOM GENERATION
+
+function generateRoomName() {
+  return "room_" + generatedname();
+}
+let asiacount = 0
+let uaecount = 0
+let americacount = 0
+let americawestcount = 0
+let africacount = 0
+let totalplayers = 0
+
 
 const io = socketIo(server, {
   cors: corsConfig,
@@ -472,6 +474,8 @@ function launchGameServer(roomName) {
     if (index !== -1) matches.splice(index, 1);
   });
 }
+
+//  #endregion
 
 // Routes
 require("./routes")(app);
