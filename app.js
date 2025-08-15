@@ -368,6 +368,8 @@ io.on("connection", (socket) => {
     const matchdata = JSON.parse(data);
     const selectedRegion = matchdata.region;
 
+    console.log(`PLAYER SELECTED SERVER ${selectedRegion}`)
+
     socket.selectedRegion = selectedRegion;
 
     // Find match in the same region
