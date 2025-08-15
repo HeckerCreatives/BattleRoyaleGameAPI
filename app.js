@@ -14,10 +14,7 @@ const AWS = require('aws-sdk');
 const {gameserverinit} = require("./Initialize/init")
 
 const fleetIdsByRegion = {
-  'us-east-1': 'fleet-123abc',
-  'us-west-2': 'fleet-456def',
-  'asia': 'fleet-789ghi',
-  'eu-central-1': 'fleet-321xyz'
+  'asia': 'fleet-92e24bef-c59d-4614-bed3-6d614ebebd8f'
 };
 
 
