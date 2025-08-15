@@ -14,7 +14,7 @@ const AWS = require('aws-sdk');
 const {gameserverinit} = require("./Initialize/init")
 
 const fleetIdsByRegion = {
-  'Asia': 'fleet-92e24bef-c59d-4614-bed3-6d614ebebd8f'
+  'ap-southeast-1': 'fleet-92e24bef-c59d-4614-bed3-6d614ebebd8f'
 };
 
 
@@ -483,6 +483,7 @@ async function launchGameLiftServer(roomName, region) {
       FleetId: fleetIdsByRegion[region], // map region to fleet
       MaximumPlayerSessionCount: 50,
       GameProperties: [
+        { Key: 'server', Value: 'yes' },
         { Key: 'roomname', Value: roomName },
         { Key: 'mapname', Value: 'PrototypeMultiplayer' },
       ]
