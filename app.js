@@ -483,7 +483,6 @@ async function launchGameLiftServer(roomName, region) {
       FleetId: fleetIdsByRegion[region], // map region to fleet
       MaximumPlayerSessionCount: 50,
       GameProperties: [
-        { Key: 'server', Value: 'yes' },
         { Key: 'roomname', Value: roomName },
         { Key: 'mapname', Value: 'PrototypeMultiplayer' },
       ]
