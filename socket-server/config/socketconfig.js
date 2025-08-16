@@ -1,9 +1,17 @@
-const { Server } = require('socket.io');
 const { eventconnection } = require("./connectionHandler")
 const socketIo = require("socket.io");
 
+let io; // store globally
+
+const getIo = () => {
+    if (!io) {
+        throw new Error("Socket.io not initialized yet!");
+    }
+    return io;
+};
+
 const socketserver = async (server, corsconfig) => {
-    const io = socketIo(server, {
+    io = socketIo(server, {
         cors: corsconfig,
         pingInterval: 10000,
         pingTimeout: 20000,
@@ -25,5 +33,6 @@ const socketserver = async (server, corsconfig) => {
 }
 
 module.exports = {
-  socketserver
+  socketserver,
+  getIo
 };
