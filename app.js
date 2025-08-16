@@ -382,6 +382,8 @@ io.on("connection", (socket) => {
     if (!match) {
       const roomName = generateRoomName();
 
+      console.log("IS GAME LIFT SERVER: ", process.env.GAMELIFT_SERVER)
+
       if (process.env.GAMELIFT_SERVER) {
         await launchGameLiftServer(roomName, selectedRegion);
       } else {
