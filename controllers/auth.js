@@ -26,7 +26,8 @@ const encrypt = async password => {
 
 exports.register = async (req, res) => {
     
-    const { username, password, email, country, appversion } = req.body;
+    const { username, password, email, country } = req.body;
+    const {appversion} = req.query
 
     if (!appversion){
         return res.status(400).json({ message: 'Bad Request', data: "App version is required." });
