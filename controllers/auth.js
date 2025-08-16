@@ -1,4 +1,5 @@
 const Users = require("../models/Users")
+const Version = require("../models/Version");
 
 const bcrypt = require('bcrypt');
 const jsonwebtokenPromisified = require('jsonwebtoken-promisified');
@@ -25,7 +26,21 @@ const encrypt = async password => {
 
 exports.register = async (req, res) => {
     
-    const { username, password, email, country } = req.body;
+    const { username, password, email, country, appversion } = req.body;
+
+    if (!appversion){
+        return res.status(400).json({ message: 'Bad Request', data: "App version is required." });
+    }
+
+    const gameversion = await Version.findOne({ isActive: true })
+    
+    if (!gameversion) {
+        return res.status(500).json({ message: 'Internal Server Error', data: "There's a problem with the server. Please try again later." });
+    }
+
+    if (appversion != gameversion.version){
+        return res.status(400).json({ message: 'Bad Request', data: `Your app version is outdated! Please update your app to the latest version (${gameversion.version}) to continue.` });
+    }
 
     if(!email || !username || !password || !country){
         return res.status(400).json({ message: "failed", data: "Please enter all user details."})
@@ -171,7 +186,21 @@ exports.register = async (req, res) => {
 }
 
 exports.authlogin = async(req, res) => {
-    const { username, password } = req.query;
+    const { username, password, appversion } = req.query;
+
+    if (!appversion){
+        return res.status(400).json({ message: 'Bad Request', data: "App version is required." });
+    }
+
+    const gameversion = await Version.findOne({ isActive: true })
+
+    if (!gameversion) {
+        return res.status(500).json({ message: 'Internal Server Error', data: "There's a problem with the server. Please try again later." });
+    }
+
+    if (appversion != gameversion.version){
+        return res.status(400).json({ message: 'Bad Request', data: `Your app version is outdated! Please update your app to the latest version (${gameversion.version}) to continue.` });
+    }
 
     Users.findOne({ username: { $regex: new RegExp('^' + username + '$', 'i') } })
     .then(async user => {
@@ -183,22 +212,19 @@ exports.authlogin = async(req, res) => {
             if (user.gametoken != ''){
                 return res.status(401).json({ message: 'failed', data: `Your account is currently logged in on another device! Please logout first and login again` });
             }
-console.log("1")
+
             const maintenancedata = await Maintenance.findOne({type: "fullgame"})
             .then(data => data)
             .catch(err => {
                 console.log(`There's a problem getting maintenance data ${err}`)
                 return res.status(400).json({ message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
             })
-            console.log(maintenancedata)
-console.log("2")
+
             if (maintenancedata.value != "0"){
                 return res.status(400).json({ message: "bad-request", data: "The game is currently under maintenance! Please check our website for more details and try again later." })
             }
 
-console.log("3")
             const token = await encrypt(privateKey)
-console.log("4")
 
             const payload = { id: user._id, username: user.username, status: user.status, token: token, auth: "player" }
 
