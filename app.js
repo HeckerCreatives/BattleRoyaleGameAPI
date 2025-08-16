@@ -384,7 +384,7 @@ io.on("connection", (socket) => {
 
       console.log("IS GAME LIFT SERVER: ", process.env.GAMELIFT_SERVER)
 
-      if (process.env.GAMELIFT_SERVER) {
+      if (process.env.GAMELIFT_SERVER == "true") {
         await launchGameLiftServer(roomName, selectedRegion);
       } else {
         launchGameServer(roomName);
