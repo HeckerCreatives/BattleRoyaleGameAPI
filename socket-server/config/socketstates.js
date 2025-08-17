@@ -1,9 +1,6 @@
 const activeUsers = new Map();          // userId -> socket.id
 const socketHeartbeats = new Map();     // socket.id -> { interval, timeout, missedPings }
 
-let africacount = 0
-let uaecount = 0
-let americacount = 0
 const HEARTBEAT_INTERVAL = 5000; // Send ping every 10 seconds
 const TIMEOUT = 10000;            // Wait 10 seconds for pong
 const MAX_MISSED_PINGS = 3;
@@ -16,6 +13,30 @@ const asiastate = {
   }
 }
 
+const uaestate = {
+  uaecount: 0,
+  get totaluaecount() { return this.uaecount},
+  uaecountsetter(value){
+    this.uaecount = value
+  }
+}
+
+const americastate = {
+  americacount: 0,
+  get totalamericacount() { return this.americacount },
+  americacountsetter(value){
+    this.americacount = value
+  }
+}
+
+const africastate = {
+  africacount: 0,
+  get totalafricacount() { return this.africacount },
+  africacountsetter(value){
+    this.africacount = value
+  }
+}
+
 const totalplayerstate = {
   totalplayers: 0,
   get totalplayerscount() { return this.totalplayers},
@@ -24,23 +45,22 @@ const totalplayerstate = {
   },
   removePlayer(){
     this.totalplayers -= 1;
-  }
-}
 
-function setasiacount(value){
-  asiacount = value
+    if (this.totalplayers <= 0){
+      this.totalplayers = 0
+    }
+  }
 }
 
 module.exports = {
   activeUsers,
   socketHeartbeats,
-  africacount,
-  uaecount,
-  americacount,
+  asiastate,
+  uaestate,
+  americastate,
+  africastate,
+  totalplayerstate,
   HEARTBEAT_INTERVAL,
   TIMEOUT,
   MAX_MISSED_PINGS,
-  asiastate,
-  totalplayerstate,
-  setasiacount,
 };

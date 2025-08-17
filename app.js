@@ -5,7 +5,7 @@ const http = require("http");
 const cors = require("cors");
 require("dotenv").config();
 const { socketserver } = require("./socket-server/config/socketconfig")
-const { asiaServer } = require("./socket-client/config/socketconfig")
+const { asiaServer, uaeServer, amerciaServer, africaServer } = require("./socket-client/config/socketconfig")
 // const {gameserverinit} = require("./Initialize/init")
 
 const app = express();
@@ -38,6 +38,9 @@ app.use(bodyParser.urlencoded({ limit: "50mb", extended: false, parameterLimit: 
 //  Sockets
 socketserver(server, corsConfig)
 asiaServer()
+uaeServer()
+amerciaServer()
+africaServer()
 
 // Routes
 require("./routes")(app);

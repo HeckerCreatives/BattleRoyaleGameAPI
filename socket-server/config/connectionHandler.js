@@ -1,5 +1,5 @@
-const { activeUsers, totalplayerstate, asiacount, africacount, uaecount, americacount, socketHeartbeats, HEARTBEAT_INTERVAL, TIMEOUT, MAX_MISSED_PINGS } = require("./socketstates")
-const { asiaserver } = require("../../socket-client/config/socketconfig")
+const { activeUsers, totalplayerstate, socketHeartbeats, HEARTBEAT_INTERVAL, TIMEOUT, MAX_MISSED_PINGS, asiastate, uaestate, americastate, africastate } = require("./socketstates")
+const { asiaserver, uaeserver, americaserver, africaserver } = require("../../socket-client/config/socketconfig")
 
 exports.eventconnection = (io, socket) => {
     //  #region SOCKET MAIN EVENTS
@@ -68,24 +68,22 @@ exports.eventconnection = (io, socket) => {
             }))
         }
         else if (userregion == "uae"){
-            uaecount -= 1;
-            console.log("uae count: ", uaecount)
-            io.emit("uaecount", uaecount)
+            uaeserver.emit("removeusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
         else if (userregion == "us"){
-            americacount -= 1;
-            console.log("us east count: ", americacount)
-            io.emit("americaeastcount", americacount)
+            americaserver.emit("removeusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
-        else if (userregion == "usw"){
-            americacount -= 1;
-            console.log("us west count: ", americawestcount)
-            io.emit("americawestcount", americawestcount)
-        }
-        else if (userregion == "za"){
-            africacount -= 1;
-            console.log("africa count: ", africacount)
-            io.emit("africacount", africacount)
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("removeusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
 
         if (removeplayer){
@@ -103,24 +101,22 @@ exports.eventconnection = (io, socket) => {
             }))
         }
         else if (userregion == "uae"){
-            uaecount -= 1;
-            console.log("uae count: ", uaecount)
-            io.emit("uaecount", uaecount)
+            uaeserver.emit("receiveusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
         else if (userregion == "us"){
-            americacount -= 1;
-            console.log("us east count: ", americacount)
-            io.emit("americaeastcount", americacount)
+            americaserver.emit("receiveusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
-        else if (userregion == "usw"){
-            americacount -= 1;
-            console.log("us west count: ", americawestcount)
-            io.emit("americawestcount", americawestcount)
-        }
-        else if (userregion == "za"){
-            africacount -= 1;
-            console.log("africa count: ", africacount)
-            io.emit("africacount", africacount)
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("receiveusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
 
         if (addplayer){
@@ -139,29 +135,81 @@ exports.eventconnection = (io, socket) => {
             }))
         }
         else if (userregion == "uae"){
-            uaecount -= 1;
-            console.log("uae count: ", uaecount)
-            io.emit("uaecount", uaecount)
+            uaeserver.emit("playerquit", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
         else if (userregion == "us"){
-            americacount -= 1;
-            console.log("us east count: ", americacount)
-            io.emit("americaeastcount", americacount)
+            americaserver.emit("playerquit", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
-        else if (userregion == "usw"){
-            americacount -= 1;
-            console.log("us west count: ", americawestcount)
-            io.emit("americawestcount", americawestcount)
-        }
-        else if (userregion == "za"){
-            africacount -= 1;
-            console.log("africa count: ", africacount)
-            io.emit("africacount", africacount)
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("playerquit", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
         }
 
         totalplayerstate.addPlayer(1);
         io.emit("playercount", totalplayerstate.totalplayerscount)
         
+    }
+
+    const changeregion = (region) => {
+        if (userregion== "asia"){
+            asiaserver.emit("removeusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
+        else if (userregion == "uae"){
+            uaeserver.emit("removeusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
+        else if (userregion == "us"){
+            americaserver.emit("removeusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("removeusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
+
+        userregion = region
+
+        if (userregion== "asia"){
+            asiaserver.emit("receiveusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
+        else if (userregion == "uae"){
+            uaeserver.emit("receiveusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
+        else if (userregion == "us"){
+            americaserver.emit("receiveusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("receiveusers", JSON.stringify({
+                username: currentUserId,
+                region: userregion
+            }))
+        }
     }
 
     socket.on("login", (data) => {
@@ -184,13 +232,14 @@ exports.eventconnection = (io, socket) => {
 
         console.log("total players: ", totalplayerstate.totalplayerscount)
         addregion(true)
-        
-        // socket.emit("selectedservercount", JSON.stringify({
-        //     asia: asiacount,
-        //     za: africacount,
-        //     uae: uaecount,
-        //     us: americacount,
-        // }))
+
+        socket.emit("selectedservercount", JSON.stringify({
+            asia: asiastate.totalasiacount,
+            za: africastate.totalafricacount,
+            uae: uaestate.totaluaecount,
+            us: americastate.totalamericacount
+        }))
+
 
         console.log(`User ${currentUserId} logged in on ${socket.id}`);
     });
@@ -211,19 +260,39 @@ exports.eventconnection = (io, socket) => {
     })
 
     socket.on("changeregion", (regiondata) => {
+
         const tempregion = JSON.parse(regiondata)
 
         if (userregion != tempregion.newregion){
-            console.log(tempregion.oldregion != tempregion.newregion)
-            removeregion(false)
-            addregionwithoutplayercount(tempregion.newregion)
+            changeregion(tempregion.newregion)
         }
     })
 
     socket.on("findmatch", async () => {
+        console.log(`find match by ${currentUserId}  region ${userregion}  socketid ${socket.id}`)
         if (userregion == "asia"){
-            console.log(`find match by ${currentUserId}  region ${userregion}  socketid ${socket.id}`)
             asiaserver.emit("findmatchreceive", {
+                username: currentUserId,
+                region: userregion,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "uae"){
+            uaeserver.emit("findmatchreceive", {
+                username: currentUserId,
+                region: userregion,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "us"){
+            americaserver.emit("findmatchreceive", {
+                username: currentUserId,
+                region: userregion,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("findmatchreceive", {
                 username: currentUserId,
                 region: userregion,
                 socketid: socket.id
