@@ -32,14 +32,13 @@ exports.register = async (req, res) => {
     if (!appversion){
         return res.status(400).json({ message: 'Bad Request', data: "App version is required." });
     }
-
     const gameversion = await Version.findOne({ isActive: true })
-    
+
     if (!gameversion) {
         return res.status(500).json({ message: 'Internal Server Error', data: "There's a problem with the server. Please try again later." });
     }
 
-    if (appversion != gameversion.version){
+    if (appversion[0] != gameversion.version){
         return res.status(400).json({ message: 'Bad Request', data: `Your app version is outdated! Please update your app to the latest version (${gameversion.version}) to continue.` });
     }
 
@@ -192,7 +191,7 @@ exports.authlogin = async(req, res) => {
     if (!appversion){
         return res.status(400).json({ message: 'Bad Request', data: "App version is required." });
     }
-
+    
     const gameversion = await Version.findOne({ isActive: true })
 
     if (!gameversion) {
