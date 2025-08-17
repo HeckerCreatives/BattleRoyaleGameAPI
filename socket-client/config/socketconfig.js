@@ -20,9 +20,7 @@ function asiaServer() {
     asiaserver.on("sendusercount", (data) => {
         console.log("received user count for asia", data)
 
-        asiastate.asiacountsetter(data)
-
-        socket.emit("asiacount", asiastate.totalasiacount)
+        asiastate.asiacountsetter(data, socket)
     })
     asiaserver.on("matchfound", (data) => {
         const playerSocket = socket.sockets.sockets.get(data.socketid)
@@ -63,9 +61,8 @@ function uaeServer() {
     uaeserver.on("sendusercount", (data) => {
         console.log("received user count for uae", data)
 
-        uaestate.uaecountsetter(data)
+        uaestate.uaecountsetter(data, socket)
 
-        socket.emit("uaecount", uaestate.totaluaecount)
     })
     uaeserver.on("matchfound", (data) => {
         const playerSocket = socket.sockets.sockets.get(data.socketid)
@@ -106,9 +103,7 @@ function amerciaServer() {
     americaserver.on("sendusercount", (data) => {
         console.log("received user count for america", data)
 
-        americastate.americacountsetter(data)
-
-        socket.emit("americacount", americastate.totalamericacount)
+        americastate.americacountsetter(data, socket)
     })
     americaserver.on("matchfound", (data) => {
         const playerSocket = socket.sockets.sockets.get(data.socketid)
@@ -149,9 +144,7 @@ function africaServer() {
     africaserver.on("sendusercount", (data) => {
         console.log("received user count for africa", data)
 
-        africastate.africacountsetter(data)
-
-        socket.emit("africacount", africastate.totalafricacount)
+        africastate.africacountsetter(data, socket)
     })
     africaserver.on("matchfound", (data) => {
         const playerSocket = socket.sockets.sockets.get(data.socketid)

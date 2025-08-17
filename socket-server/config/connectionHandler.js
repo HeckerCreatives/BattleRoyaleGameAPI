@@ -87,8 +87,7 @@ exports.eventconnection = (io, socket) => {
         }
 
         if (removeplayer){
-            totalplayerstate.removePlayer()
-            io.emit("playercount", totalplayerstate.totalplayerscount)
+            totalplayerstate.removePlayer(io)
         }
         
     }
@@ -120,9 +119,8 @@ exports.eventconnection = (io, socket) => {
         }
 
         if (addplayer){
-            totalplayerstate.addPlayer();
+            totalplayerstate.addPlayer(io);
             console.log(`player added ${totalplayerstate.totalplayerscount}`)
-            io.emit("playercount", totalplayerstate.totalplayerscount)
         }
         
     }
@@ -153,8 +151,7 @@ exports.eventconnection = (io, socket) => {
             }))
         }
 
-        totalplayerstate.addPlayer(1);
-        io.emit("playercount", totalplayerstate.totalplayerscount)
+        totalplayerstate.removePlayer(io);
         
     }
 
