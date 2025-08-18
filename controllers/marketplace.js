@@ -198,6 +198,8 @@ exports.getuserinventory = async (req, res) => {
                 throw err;
             });
 
+            console.log(inventory)
+
         const formattedInventory = inventory.reduce((obj, item) => {
             obj[item.itemid] = {
                 itemid: item.itemid,

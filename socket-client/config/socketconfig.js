@@ -23,6 +23,7 @@ function asiaServer() {
         asiastate.asiacountsetter(data, socket)
     })
     asiaserver.on("matchfound", (data) => {
+        console.log(`SENDING MATCH FOUND to ${data.socketid}. MATCH DATA: ${data.roomname}`)
         const playerSocket = socket.sockets.sockets.get(data.socketid)
         playerSocket.emit("matchfound", data.roomname)
     })
