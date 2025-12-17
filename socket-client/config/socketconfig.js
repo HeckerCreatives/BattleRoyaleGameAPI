@@ -42,6 +42,42 @@ function asiaServer() {
             }
         })
     })
+    asiaserver.on("reconnectexist", (data) => {
+        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+
+        data.playersocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("reconnectexist", {
+                    roomName: data.roomName
+                })
+            }
+        })
+    })
+    asiaserver.on("reconnectfail", (data) => {
+        console.log(`SENDING NO RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+
+        console.log(`SENDING TO ${socketid}.`)
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("reconnectfail")
+        }
+    })
+    asiaserver.on("doneremovereconnect", (data) => {
+        console.log(`SENDING DONE REMOVE RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("doneremovereconnect")
+        }
+    })
 }
 
 let uaeserver = io(process.env.UAE_SERVER, {
@@ -84,6 +120,32 @@ function uaeServer() {
             }
         })
     })
+    uaeserver.on("reconnectexist", (data) => {
+        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+
+        data.playersocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("reconnectexist", {
+                    roomName: data.roomName
+                })
+            }
+        })
+    })
+    uaeserver.on("reconnectfail", (data) => {
+        console.log(`SENDING NO RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+
+        console.log(`SENDING TO ${socketid}.`)
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("reconnectfail")
+        }
+    })
 }
 
 let americaserver = io(process.env.AMERICA_SERVER, {
@@ -125,6 +187,32 @@ function amerciaServer() {
             }
         })
     })
+    americaserver.on("reconnectexist", (data) => {
+        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+
+        data.playersocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("reconnectexist", {
+                    roomName: data.roomName
+                })
+            }
+        })
+    })
+    americaserver.on("reconnectfail", (data) => {
+        console.log(`SENDING NO RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+
+        console.log(`SENDING TO ${socketid}.`)
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("reconnectfail")
+        }
+    })
 }
 
 let africaserver = io(process.env.AFRICA_SERVER, {
@@ -165,6 +253,32 @@ function africaServer() {
                 })
             }
         })
+    })
+    africaserver.on("reconnectexist", (data) => {
+        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+
+        data.playersocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("reconnectexist", {
+                    roomName: data.roomName
+                })
+            }
+        })
+    })
+    africaserver.on("reconnectfail", (data) => {
+        console.log(`SENDING NO RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+
+        console.log(`SENDING TO ${socketid}.`)
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("reconnectfail")
+        }
     })
 }
 

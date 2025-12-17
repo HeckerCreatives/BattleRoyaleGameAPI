@@ -209,6 +209,62 @@ exports.eventconnection = (io, socket) => {
         }
     }
 
+    socket.on("needtoreconnect", () => {
+        console.log(`need to reconnect ${currentUserId}   ${socket.id}`)
+        if (userregion== "asia"){
+            asiaserver.emit("needtoreconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "uae"){
+            uaeserver.emit("needtoreconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "us"){
+            americaserver.emit("needtoreconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("needtoreconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+    })
+
+    socket.on("removereconnect", () => {
+        console.log(`remove reconnect ${currentUserId}   ${socket.id}   ${userregion}`)
+        if (userregion== "asia"){
+            asiaserver.emit("removereconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "uae"){
+            uaeserver.emit("removereconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "us"){
+            americaserver.emit("removereconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("removereconnect", {
+                username: currentUserId,
+                socketid: socket.id
+            })
+        }
+    })
+
     socket.on("login", (data) => {
         const playerdata = JSON.parse(data)
 
@@ -303,7 +359,7 @@ exports.eventconnection = (io, socket) => {
         removeregion(true)
 
         if (currentUserId && activeUsers.get(currentUserId) === socket.id) {
-            quitplayer()
+            // quitplayer()
             activeUsers.delete(currentUserId);
         }
     });
