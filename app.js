@@ -6,7 +6,7 @@ const cors = require("cors");
 require("dotenv").config();
 const { socketserver } = require("./socket-server/config/socketconfig")
 const { asiaServer, uaeServer, amerciaServer, africaServer } = require("./socket-client/config/socketconfig")
-// const {gameserverinit} = require("./Initialize/init")
+const {gameserverinit} = require("./Initialize/init")
 
 const app = express();
 
@@ -27,7 +27,7 @@ mongoose
   })
   .then(() => {
     console.log("MongoDB Connected");
-    // gameserverinit()
+    gameserverinit()
   })
   .catch((err) => console.log(err));
   
