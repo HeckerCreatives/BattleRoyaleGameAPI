@@ -27,6 +27,25 @@ function asiaServer() {
         const playerSocket = socket.sockets.sockets.get(data.socketid)
         playerSocket.emit("matchfound", data.roomname)
     })
+    asiaserver.on("waitingroomupdate", data => {
+        console.log(`SENDING WAITING ROOM UPDATE. MATCH DATA: ${JSON.stringify(data)}`)
+
+        data.playerSocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data}`)
+
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("matchstatuschanged", {
+                    roomName: data.roomName,
+                    players: data.players,
+                    maxPlayers: data.maxPlayers,
+                    status: data.status,
+                    countdown: data.countdown
+                })
+            }
+        })
+    })
     asiaserver.on("matchstatuschanged", (data) => {
         console.log(`SENDING STATUS CHANGED TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 

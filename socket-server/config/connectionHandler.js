@@ -352,6 +352,43 @@ exports.eventconnection = (io, socket) => {
             })
         }
     })
+
+    socket.on("quitonmatch", data => {
+        console.log(`quit match by ${currentUserId}  region: ${userregion}  socketid: ${socket.id}    roomname: ${
+        data.roomname}`)
+        if (userregion == "asia"){
+            asiaserver.emit("quitonmatch", {
+                username: currentUserId,
+                region: userregion,
+                socketid: socket.id,
+                roomname: data.roomname
+            })
+        }
+        else if (userregion == "uae"){
+            uaeserver.emit("quitonmatch", {
+                username: currentUserId,
+                region: userregion,
+                socketid: socket.id,
+                roomname: data.roomname
+            })
+        }
+        else if (userregion == "us"){
+            americaserver.emit("quitonmatch", {
+                username: currentUserId,
+                region: userregion,
+                socketid: socket.id,
+                roomname: data.roomname
+            })
+        }
+        else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
+            africaserver.emit("quitonmatch", {
+                username: currentUserId,
+                region: userregion,
+                socketid: socket.id,
+                roomname: data.roomname
+            })
+        }
+    })
     
     socket.on("disconnecting", (reason) => {
         console.log(`Disconnecting ${socket.id}, reason: ${reason}`);
