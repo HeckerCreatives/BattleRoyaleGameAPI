@@ -64,7 +64,7 @@ exports.updateusergamedetails = async (req, res) => {
 
     const {id, username} = req.user
 
-    const { kill, death, rank } = req.body
+    const { kill, death, rank, playtime, win, loss } = req.body
     const usergamedata = await Usergamedetails.findOne({owner: new mongoose.Types.ObjectId(id)})
     .then(data => data)
     .catch(err => {
@@ -106,6 +106,9 @@ exports.updateusergamedetails = async (req, res) => {
     let expneeded = 80 * level
     let newKills = usergamedata.kill + kill
     let newDeaths = usergamedata.death + death
+    let newPlaytime = usergamedata.playtime + playtime
+    let newWin = usergamedata.win + win
+    let newLoss = usergamedata.loss + loss
 
     if (newxp >= expneeded){
         newlevel = level + 1
@@ -121,7 +124,10 @@ exports.updateusergamedetails = async (req, res) => {
                 kill: parseInt(newKills),
                 death: parseInt(newDeaths),
                 level: parseInt(newlevel),
-                xp: parseInt(newxp)
+                xp: parseInt(newxp),
+                playtime: parseInt(newPlaytime),
+                win: parseInt(newWin),
+                loss: parseInt(newLoss)
             }
         }
     )

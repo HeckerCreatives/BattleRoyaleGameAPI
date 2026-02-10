@@ -489,3 +489,77 @@ exports.guestaccbind = async (req, res) => {
         });
     }
 }
+
+exports.walletLogin = async (req, res) => {
+    const { walletAddress } = req.body;
+
+    if (!walletAddress) {
+        return res.status(400).json({ 
+            message: "bad-request", 
+            data: "Wallet address is required!" 
+        });
+    }
+
+    const normalizedAddress = walletAddress.toLowerCase();
+
+    Users.findOne({ walletAddress: normalizedAddress })
+    .then(async user => {
+        if (!user) {
+            return res.status(400).json({
+                message: "failed",
+                data: "Register your wallet first before logging in!"
+            });
+        }
+        
+        // Check account status
+        if (user.status !== "active") {
+            return res.status(401).json({ 
+                message: 'failed', 
+                data: `Your account has been ${user.status}! Please contact support for more details.` 
+            });
+        }
+
+        // Generate web token
+        const token = await encrypt(privateKey);
+        user.webtoken = token;
+        await user.save();
+
+        // Create JWT payload
+        const payload = { 
+            id: user._id, 
+            username: user.username, 
+            walletAddress: user.walletAddress,
+            status: user.status, 
+            token: token, 
+            auth: "player" 
+        };
+
+        let jwtoken = "";
+
+        try {
+            jwtoken = await jsonwebtokenPromisified.sign(payload, privateKey, { algorithm: 'RS256' });
+        } catch (error) {
+            console.error('Error signing token:', error.message);
+            return res.status(500).json({ 
+                error: 'Internal Server Error', 
+                data: "There's a problem signing in! Please contact customer support. Error 004" 
+            });
+        }
+
+        res.cookie('sessionToken', jwtoken, { secure: true, sameSite: 'None' });
+        return res.json({
+            message: "success", 
+            data: {
+                auth: "user",
+                isNewUser: user.createdAt.getTime() === user.updatedAt.getTime()
+            }
+        });
+    })
+    .catch(err => {
+        console.error('Wallet login error:', err);
+        return res.status(500).json({ 
+            message: "error", 
+            data: "Login failed. Please try again." 
+        });
+    });
+}

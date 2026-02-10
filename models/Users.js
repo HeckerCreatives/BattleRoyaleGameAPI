@@ -21,6 +21,18 @@ const UsersSchema = new mongoose.Schema(
         banreason: {
             type: String
         },
+        walletAddress: {
+            type: String,
+            unique: true,
+            sparse: true, // allows multiple null values
+            lowercase: true
+        },
+        walletNonce: {
+            type: String
+        },
+        walletNonceExpiry: {
+            type: Date
+        },
         status: {
             type: String,
             default: "active"
