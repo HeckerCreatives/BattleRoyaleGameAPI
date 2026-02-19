@@ -46,11 +46,16 @@ exports.getusergamedetails = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem with the server. Please try again later"})
     })
 
+    console.log(usergamedata)
+
     const data = {
         kill: usergamedata.kill,
         death: usergamedata.death,
         level: usergamedata.level,
         xp: usergamedata.xp,
+        playtime: usergamedata.playtime,
+        win: usergamedata.wins ?? 0,
+        loss: usergamedata.losses ?? 0,
         userrank: rankvalue,
         energy: energyval.energy,
         leaderboard: lbvalue.amount,
@@ -65,6 +70,9 @@ exports.updateusergamedetails = async (req, res) => {
     const {id, username} = req.user
 
     const { kill, death, rank, playtime, win, loss } = req.body
+
+    console.log(`playtime: ${playtime}    user: ${username}`)
+
     const usergamedata = await Usergamedetails.findOne({owner: new mongoose.Types.ObjectId(id)})
     .then(data => data)
     .catch(err => {
@@ -126,8 +134,8 @@ exports.updateusergamedetails = async (req, res) => {
                 level: parseInt(newlevel),
                 xp: parseInt(newxp),
                 playtime: parseInt(newPlaytime),
-                win: parseInt(newWin),
-                loss: parseInt(newLoss)
+                wins: parseInt(newWin),
+                losses: parseInt(newLoss)
             }
         }
     )
