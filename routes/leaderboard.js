@@ -7,6 +7,6 @@ router
     .get("/getkillleaderboard", protectplayer, getkillleaderboard)
     .get("/getdeathleaderboard", protectplayer, getdeathleaderboard)
     .get("/getlevelleaderboard", protectplayer, getlevelleaderboard)
-    .post("/updateuserleaderboard", protectplayer, updateuserleaderboard)
+    .post("/updateuserleaderboard", updateuserleaderboard)
     
 module.exports = router;

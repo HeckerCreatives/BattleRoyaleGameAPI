@@ -71,7 +71,7 @@ exports.updateusergamedetails = async (req, res) => {
 
     const { kill, death, rank, playtime, win, loss } = req.body
 
-    console.log(`playtime: ${playtime}    user: ${username}`)
+    console.log(req.body)
 
     const usergamedata = await Usergamedetails.findOne({owner: new mongoose.Types.ObjectId(id)})
     .then(data => data)
@@ -114,9 +114,11 @@ exports.updateusergamedetails = async (req, res) => {
     let expneeded = 80 * level
     let newKills = usergamedata.kill + kill
     let newDeaths = usergamedata.death + death
-    let newPlaytime = usergamedata.playtime + playtime
-    let newWin = usergamedata.win + win
-    let newLoss = usergamedata.loss + loss
+    let newPlaytime = (usergamedata.playtime ?? 0) + playtime
+    let newWin = (usergamedata.win ?? 0) + win
+    let newLoss = (usergamedata.losses ?? 0) + loss
+
+    console.log("username", username, "new loss", newLoss, "loss", loss)
 
     if (newxp >= expneeded){
         newlevel = level + 1
@@ -146,7 +148,7 @@ exports.updateusergamedetails = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem updating the user game details"})
     })
 
-    await Matchhistory.create({owner: new mongoose.Types.ObjectId(id), kill: kill, placement: rank})
+    await Matchhistory.create({owner: new mongoose.Types.ObjectId(id), kill: kill, placement: rank, playtime: playtime})
     .catch(err => {
         console.log(`There's a problem creating the user match game history for ${username}. Error: ${err}`)
 
@@ -162,6 +164,106 @@ exports.updateusergamedetails = async (req, res) => {
 
     return res.json({message: "success", data: responseData})
 
+}
+
+exports.updatebyserverusergamedetails = async (req ,res) => {
+    let { id, username, kill, death, rank, playtime, win, loss } = req.body
+
+    id = req.body.id.join('')
+    username = req.body.username.join('')
+
+    console.log(req.body)
+
+    const usergamedata = await Usergamedetails.findOne({owner: new mongoose.Types.ObjectId(id)})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the user game details for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the user game details"})
+    })
+
+    let level = usergamedata.level
+
+    // Calculate base XP
+    let xpearned = ((parseInt(level) / 2) * 3) + (((100 - parseInt(rank) + 1) / 100) * 20) + 
+    (parseInt(kill) * ((parseInt(level)/ 4) + 1))
+
+    // Check for active XP effects
+    await ActiveEffects.updateMany(
+        { 
+            owner: new mongoose.Types.ObjectId(id),
+            expiresAt: { $lt: new Date() },
+            isActive: true
+        },
+        { isActive: false }
+    );
+
+    const activeXPEffect = await ActiveEffects.findOne({
+        owner: new mongoose.Types.ObjectId(id),
+        type: "potion",
+        isActive: true,
+        expiresAt: { $gt: new Date() }
+    });
+
+    // Apply XP multiplier if active
+    if (activeXPEffect) {
+        xpearned *= activeXPEffect.multiplier;
+    }
+
+    let newxp = usergamedata.xp + xpearned
+    let newlevel = level
+    let expneeded = 80 * level
+    let newKills = usergamedata.kill + kill
+    let newDeaths = usergamedata.death + death
+    let newPlaytime = (usergamedata.playtime ?? 0) + playtime
+    let newWin = (usergamedata.win ?? 0) + win
+    let newLoss = (usergamedata.losses ?? 0) + loss
+
+    console.log("username", username, "new loss", newLoss, "loss", loss)
+
+    if (newxp >= expneeded){
+        newlevel = level + 1
+        newxp = newxp - expneeded
+    }
+
+   const data =  await Usergamedetails.findOneAndUpdate(
+        {
+            owner: new mongoose.Types.ObjectId(id)
+        },
+        {
+            $set: {
+                kill: parseInt(newKills),
+                death: parseInt(newDeaths),
+                level: parseInt(newlevel),
+                xp: parseInt(newxp),
+                playtime: parseInt(newPlaytime),
+                wins: parseInt(newWin),
+                losses: parseInt(newLoss)
+            }
+        }
+    )
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem updating the user game details for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem updating the user game details"})
+    })
+
+    await Matchhistory.create({owner: new mongoose.Types.ObjectId(id), kill: kill, placement: rank, playtime: playtime})
+    .catch(err => {
+        console.log(`There's a problem creating the user match game history for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem updating the user match game history"})
+    })
+
+    const responseData = {
+        ...data.toObject(),
+        xpEarned: Math.floor(xpearned),
+        multiplierApplied: activeXPEffect ? activeXPEffect.multiplier : 1,
+        effectName: activeXPEffect ? activeXPEffect.itemname : null
+    };
+
+    return res.json({message: "success", data: responseData})
 }
 
 exports.checkingamemaintenance = async (req, res) => {
@@ -233,7 +335,8 @@ exports.getmatchhistory = async (req, res) => {
         finaldata[index] = {
             kill: kill,
             placement: placement,
-            date: formattedDate
+            date: formattedDate,
+            playtime: data.playtime ?? 0
         }
 
         index++

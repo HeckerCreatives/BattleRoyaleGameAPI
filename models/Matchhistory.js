@@ -11,6 +11,9 @@ const MatchHistorySchema = new mongoose.Schema(
         },
         placement: {
             type: Number
+        },
+        playtime: {
+            type: Number
         }
     },
     {

@@ -1,5 +1,5 @@
 const router = require("express").Router()
-const { getusergamedetails, updateusergamedetails, checkingamemaintenance, useenergy, refundenergy, getmatchhistory } = require("../controllers/usergamedetails")
+const { getusergamedetails, updateusergamedetails, checkingamemaintenance, useenergy, refundenergy, getmatchhistory, updatebyserverusergamedetails } = require("../controllers/usergamedetails")
 const { protectplayer } = require("../middleware/middleware")
 
 router
@@ -7,6 +7,7 @@ router
     .get("/checkingamemaintenance", protectplayer, checkingamemaintenance)
     .get("/getmatchhistory", protectplayer, getmatchhistory)
     .post("/updateusergamedetails", protectplayer, updateusergamedetails)
+    .post("/updatebyserverusergamedetails", updatebyserverusergamedetails)
     .post("/useenergy", protectplayer, useenergy)
     .post("/refundenergy", protectplayer, refundenergy)
     

@@ -45,11 +45,13 @@ exports.getleaderboard = async (req, res) => {
 
 
 exports.updateuserleaderboard = async (req, res) => {
-    const {id, username} = req.user
+    let  {id, username, amount } = req.body
 
-    const  { amount } = req.body
+    
+    id = req.body.id.join('')
+    username = req.body.username.join('')
 
-   await Leaderboard.findOneAndUpdate(
+    await Leaderboard.findOneAndUpdate(
     {
         owner: new mongoose.Types.ObjectId(id),
     },
