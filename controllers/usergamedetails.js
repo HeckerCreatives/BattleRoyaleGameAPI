@@ -326,10 +326,13 @@ exports.getmatchhistory = async (req, res) => {
     tempdata.forEach(data => {
         const {kill, placement, createdAt} = data
 
-        const formattedDate = createdAt.toLocaleDateString('en-US', {
+        const formattedDate = createdAt.toLocaleString('en-US', {
             year: 'numeric',
-            month: 'long',
-            day: '2-digit'
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
         });
 
         finaldata[index] = {
