@@ -191,3 +191,253 @@ exports.getlevelleaderboard = async (req, res) =>{
 
     return res.json({message: "success", data: data})
 }
+
+exports.getplaytimeleaderboard = async (req, res) => {
+    const {id, username} = req.user
+    const lbdata = await Usergamedetails.find({playtime: {$gt: 0}})
+    .populate({
+        path: "owner",
+        select: "username"
+    })
+    .limit(50)
+    .sort({playtime: -1, updatedAt: -1})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the leaderboard`)
+    })
+
+    if (lbdata.length <= 0){
+        return res.json({message: "success", data: {
+            leaderboard: {}
+        }})
+    }
+
+    let tempindex = 0;
+
+    const data = {
+        leaderboard: {}
+    }
+
+    lbdata.forEach(tempdata => {
+        const {owner, playtime} = tempdata
+
+        data.leaderboard[tempindex] = {
+            user: owner.username,
+            amount: playtime
+        };
+        tempindex++;
+    })
+
+    return res.json({message: "success", data: data})
+}
+
+exports.getmatchesleaderboard = async (req, res) => {
+    const {id, username} = req.user
+    const lbdata = await Usergamedetails.find({losses: {$gt: 0}})
+    .populate({
+        path: "owner",
+        select: "username"
+    })
+    .limit(50)
+    .sort({losses: -1, updatedAt: -1})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the leaderboard`)
+    })
+
+    if (lbdata.length <= 0){
+        return res.json({message: "success", data: {
+            leaderboard: {}
+        }})
+    }
+
+    let tempindex = 0;
+
+    const data = {
+        leaderboard: {}
+    }
+
+    lbdata.forEach(tempdata => {
+        const {owner, losses} = tempdata
+
+        data.leaderboard[tempindex] = {
+            user: owner.username,
+            amount: losses
+        };
+        tempindex++;
+    })
+
+    return res.json({message: "success", data: data})
+}
+
+exports.getwinsleaderboard = async (req, res) => {
+    const {id, username} = req.user
+    const lbdata = await Usergamedetails.find({wins: {$gt: 0}})
+    .populate({
+        path: "owner",
+        select: "username"
+    })
+    .limit(50)
+    .sort({wins: -1, updatedAt: -1})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the leaderboard`)
+    })
+
+    if (lbdata.length <= 0){
+        return res.json({message: "success", data: {
+            leaderboard: {}
+        }})
+    }
+
+    let tempindex = 0;
+
+    const data = {
+        leaderboard: {}
+    }
+
+    lbdata.forEach(tempdata => {
+        const {owner, wins} = tempdata
+
+        data.leaderboard[tempindex] = {
+            user: owner.username,
+            amount: wins
+        };
+        tempindex++;
+    })
+
+    return res.json({message: "success", data: data})
+}
+
+
+
+exports.getleaderboard = async (req, res) => {
+    const {id, username} = req.user
+    const { page, limit, filter, type } = req.query;
+
+    const leaderboardType = type || 'points';
+    const pageLimit = parseInt(limit) || 50;
+    const currentPage = parseInt(page) || 1;
+    const skip = (currentPage - 1) * pageLimit;
+
+    let lbdata, totalDocuments, amountField;
+
+    // Fetch leaderboard data based on type
+    switch(leaderboardType) {
+        case 'kills':
+            lbdata = await Usergamedetails.find({ kill: { $gt: 0 } })
+                .populate({ path: "owner", select: "username" })
+                .limit(pageLimit).skip(skip)
+                .sort({ kill: -1, updatedAt: -1 });
+            totalDocuments = await Usergamedetails.countDocuments({ kill: { $gt: 0 } });
+            amountField = 'kill';
+            break;
+
+        case 'deaths':
+            lbdata = await Usergamedetails.find({ death: { $gt: 0 } })
+                .populate({ path: "owner", select: "username" })
+                .limit(pageLimit).skip(skip)
+                .sort({ death: -1, updatedAt: -1 });
+            totalDocuments = await Usergamedetails.countDocuments({ death: { $gt: 0 } });
+            amountField = 'death';
+            break;
+
+        case 'levels':
+            lbdata = await Usergamedetails.find()
+                .populate({ path: "owner", select: "username" })
+                .limit(pageLimit).skip(skip)
+                .sort({ level: -1, updatedAt: -1 });
+            totalDocuments = await Usergamedetails.countDocuments();
+            amountField = 'level';
+            break;
+
+        case 'playtime':
+            lbdata = await Usergamedetails.find({ playtime: { $gt: 0 } })
+                .populate({ path: "owner", select: "username" })
+                .limit(pageLimit).skip(skip)
+                .sort({ playtime: -1, updatedAt: -1 });
+            totalDocuments = await Usergamedetails.countDocuments({ playtime: { $gt: 0 } });
+            amountField = 'playtime';
+            break;
+
+        case 'matches':
+            lbdata = await Usergamedetails.find({ losses: { $gt: 0 } })
+                .populate({ path: "owner", select: "username" })
+                .limit(pageLimit).skip(skip)
+                .sort({ losses: -1, updatedAt: -1 });
+            totalDocuments = await Usergamedetails.countDocuments({ losses: { $gt: 0 } });
+            amountField = 'losses';
+            break;
+
+        case 'wins':
+            lbdata = await Usergamedetails.find({ wins: { $gt: 0 } })
+                .populate({ path: "owner", select: "username" })
+                .limit(pageLimit).skip(skip)
+                .sort({ wins: -1, updatedAt: -1 });
+            totalDocuments = await Usergamedetails.countDocuments({ wins: { $gt: 0 } });
+            amountField = 'wins';
+            break;
+
+        case 'points':
+        default:
+            lbdata = await Leaderboard.find()
+                .populate({ path: "owner", select: "username" })
+                .limit(pageLimit).skip(skip)
+                .sort({ amount: -1, updatedAt: -1 });
+            totalDocuments = await Leaderboard.countDocuments();
+            amountField = 'amount';
+            break;
+    }
+
+    if (!lbdata || lbdata.length <= 0){
+        const userStats = await getMatchStats(id);
+        return res.json({message: "success", data: {
+            leaderboard: {},
+            userStats
+        }})
+    }
+
+    // Calculate pagination
+    const totalPages = Math.ceil(totalDocuments / pageLimit);
+    const hasNextPage = currentPage < totalPages;
+    const hasPrevPage = currentPage > 1;
+
+    // Get all user IDs including current user
+    const userIds = lbdata.map(lb => lb.owner._id);
+    if (!userIds.some(uid => uid.toString() === id.toString())) {
+        userIds.push(new mongoose.Types.ObjectId(id));
+    }
+
+    // Batch fetch all stats
+    const allStats = await getBatchMatchStats(userIds);
+    const userStats = allStats.get(id.toString()) || { totalWins: 0, totalMatches: 0, playTime: 0 };
+
+    // Build leaderboard response
+    const leaderboard = {};
+    lbdata.forEach((entry, index) => {
+        const matchStats = allStats.get(entry.owner._id.toString()) || { totalWins: 0, totalMatches: 0, playTime: 0 };
+        
+        leaderboard[index] = {
+            user: entry.owner.username,
+            amount: entry[amountField],
+            totalWins: matchStats.totalWins,
+            totalMatches: matchStats.totalMatches,
+            playTime: matchStats.playTime
+        };
+    });
+
+    return res.json({
+        message: "success", 
+        data: {
+            leaderboard,
+            pagination: {
+                totalDocuments,
+                totalPages,
+                currentPage,
+                hasNextPage,
+                hasPrevPage
+            },
+            userStats
+        }
+    })
+}
