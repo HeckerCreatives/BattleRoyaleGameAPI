@@ -1,5 +1,7 @@
 const { activeUsers, totalplayerstate, socketHeartbeats, HEARTBEAT_INTERVAL, TIMEOUT, MAX_MISSED_PINGS, asiastate, uaestate, americastate, africastate } = require("./socketstates")
 const { asiaserver, uaeserver, americaserver, africaserver } = require("../../socket-client/config/socketconfig")
+const {latestPending, stopPending, reliableEmitLatest} = require("../../utils/matchmaking")
+
 
 exports.eventconnection = (io, socket) => {
     //  #region SOCKET MAIN EVENTS
@@ -389,6 +391,21 @@ exports.eventconnection = (io, socket) => {
             })
         }
     })
+
+    socket.on("ack", (data) => {
+        const messageId = data?.messageId;
+        const eventName = data?.eventName;
+
+        if (!messageId || !eventName) return;
+
+        const key = `${socket.id}:${eventName}`;
+        const cur = latestPending.get(key);
+
+        // Only clear if ACK matches the latest messageId
+        if (cur && cur.messageId === messageId) {
+            stopPending(key);
+        }
+    });
     
     socket.on("disconnecting", (reason) => {
         console.log(`Disconnecting ${socket.id}, reason: ${reason}`);
@@ -398,6 +415,11 @@ exports.eventconnection = (io, socket) => {
         if (currentUserId && activeUsers.get(currentUserId) === socket.id) {
             // quitplayer()
             activeUsers.delete(currentUserId);
+            for (const key of latestPending.keys()) {
+                if (key.startsWith(`${socket.id}:`)) {
+                    stopPending(key);
+                }
+            }
         }
     });
 

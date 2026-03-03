@@ -1,6 +1,6 @@
 const { io } = require("socket.io-client");
 const { asiastate, uaestate, americastate, africastate } = require("../../socket-server/config/socketstates")
-
+const {reliableEmitLatest} = require("../../utils/matchmaking")
 
 let asiaserver = io(process.env.ASIA_SERVER, {
     reconnection: true,
@@ -35,24 +35,27 @@ function asiaServer() {
         })
     })
     asiaserver.on("waitingroomupdate", data => {
-        console.log(`SENDING WAITING ROOM UPDATE. MATCH DATA: ${JSON.stringify(data)}`)
+        console.log(`SENDING WAITING ROOM UPDATE. MATCH DATA: ${JSON.stringify(data)}`);
 
-        data.playerSocket.forEach(tempdata => {
-            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data}`)
+        data.playerSocket.forEach(tempSocketId => {
+            console.log(`SENDING TO ${tempSocketId}. MATCH DATA: ${JSON.stringify(data)}`);
 
-            const playerSocket = socket.sockets.sockets.get(tempdata)
+            const playerSocket = socket.sockets.sockets.get(tempSocketId);
 
-            if (playerSocket){
-                playerSocket.emit("matchstatuschanged", {
-                    roomName: data.roomName,
-                    players: data.players,
-                    maxPlayers: data.maxPlayers,
-                    status: data.status,
-                    countdown: data.countdown
-                })
+            if (playerSocket) {
+            reliableEmitLatest(playerSocket, "matchstatuschanged", {
+                roomName: data.roomName,
+                players: data.players,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            }, {
+                retryMs: 800,
+                maxRetries: 12
+            });
             }
-        })
-    })
+        });
+    });
     asiaserver.on("matchstatuschanged", (data) => {
         console.log(`SENDING STATUS CHANGED TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
@@ -69,23 +72,20 @@ function asiaServer() {
         })
     })
     asiaserver.on("reconnectexist", (data) => {
-        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+        console.log(`SENDING RECON TO PLAYER ${data.playerneedtorecon}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
-        data.playerSocket.forEach(tempdata => {
-            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
-            const playerSocket = socket.sockets.sockets.get(tempdata)
+        const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
-            if (playerSocket){
-                playerSocket.emit("reconnectexist", {
-                    roomName: data.roomName,
-                    players: data.players,
-                    playerSocket: data.playerSocket,
-                    maxPlayers: data.maxPlayers,
-                    status: data.status,
-                    countdown: data.countdown
-                })
-            }
-        })
+        if (playerSocket){
+            playerSocket.emit("reconnectexist", {
+                roomName: data.roomName,
+                players: data.players,
+                playerSocket: data.playerSocket,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            })
+        }
     })
     asiaserver.on("reconnectfail", (data) => {
         console.log(`SENDING NO RECON TO PLAYERS.`)
