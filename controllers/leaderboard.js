@@ -381,6 +381,7 @@ exports.getleaderboard = async (req, res) => {
         case 'points':
         default:
             lbdata = await Leaderboard.find()
+                .populate({ path: "usergamedetails" })
                 .populate({ path: "owner", select: "username" })
                 .limit(pageLimit).skip(skip)
                 .sort({ amount: -1, updatedAt: -1 });
@@ -389,8 +390,20 @@ exports.getleaderboard = async (req, res) => {
             break;
     }
 
+    const getUserStats = await Usergamedetails.findOne({ owner: new mongoose.Types.ObjectId(id) })
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the user's stats for the leaderboard. Error: ${err}`)
+        return res.status(400).json({message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
+    })
+
+    const userStats = {
+        totalWins: getUserStats?.wins || 0,
+        totalMatches: getUserStats?.losses || 0,
+        playTime: getUserStats?.playtime || 0
+    }
+
     if (!lbdata || lbdata.length <= 0){
-        const userStats = await getMatchStats(id);
         return res.json({message: "success", data: {
             leaderboard: {},
             userStats
@@ -402,20 +415,24 @@ exports.getleaderboard = async (req, res) => {
     const hasNextPage = currentPage < totalPages;
     const hasPrevPage = currentPage > 1;
 
-    // Get all user IDs including current user
-    const userIds = lbdata.map(lb => lb.owner._id);
-    if (!userIds.some(uid => uid.toString() === id.toString())) {
-        userIds.push(new mongoose.Types.ObjectId(id));
-    }
-
-    // Batch fetch all stats
-    const allStats = await getBatchMatchStats(userIds);
-    const userStats = allStats.get(id.toString()) || { totalWins: 0, totalMatches: 0, playTime: 0 };
-
     // Build leaderboard response
     const leaderboard = {};
     lbdata.forEach((entry, index) => {
-        const matchStats = allStats.get(entry.owner._id.toString()) || { totalWins: 0, totalMatches: 0, playTime: 0 };
+        let matchStats = {
+            totalWins: 0,
+            totalMatches: 0,
+            playTime: 0
+        };
+
+        if (type === 'points') {
+            matchStats.totalWins = entry.usergamedetails?.wins || 0;
+            matchStats.totalMatches = entry.usergamedetails?.losses || 0;
+            matchStats.playTime = entry.usergamedetails?.playtime || 0; 
+        } else {
+            matchStats.totalWins = entry.wins || 0;
+            matchStats.totalMatches = entry.losses || 0;
+            matchStats.playTime = entry.playtime || 0;
+        }
         
         leaderboard[index] = {
             user: entry.owner.username,
