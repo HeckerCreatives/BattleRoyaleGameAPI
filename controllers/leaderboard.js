@@ -380,11 +380,33 @@ exports.getleaderboard = async (req, res) => {
 
         case 'points':
         default:
-            lbdata = await Leaderboard.find()
-                .populate({ path: "usergamedetails" })
-                .populate({ path: "owner", select: "username" })
-                .limit(pageLimit).skip(skip)
-                .sort({ amount: -1, updatedAt: -1 });
+            // lbdata = await Leaderboard.find()
+            //     .populate({ path: "usergamedetails" })
+            //     .populate({ path: "owner", select: "username" })
+            //     .limit(pageLimit).skip(skip)
+            //     .sort({ amount: -1, updatedAt: -1 });
+
+            lbdata = await Leaderboard.aggregate([
+                {
+                    $lookup: {
+                        from: "usergamedetails",
+                        localField: "owner",
+                        foreignField: "owner",
+                        as: "usergamedetails"
+                    }
+                },
+                { $unwind: "$usergamedetails" },
+                {
+                    $lookup: {
+                        from: "users",
+                        localField: "owner",
+                        foreignField: "_id",
+                        as: "owner"
+                    }
+                },
+                { $unwind: "$owner" }
+            ]);
+            
             totalDocuments = await Leaderboard.countDocuments();
             amountField = 'amount';
             break;
