@@ -1,5 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Leaderboard = require("../models/Leaderboard");
+const Energy = require("../models/Energy")
 const Usergamedetails = require("../models/Usergamedetails")
 
 exports.getleaderboard = async (req, res) => {
@@ -50,6 +51,18 @@ exports.updateuserleaderboard = async (req, res) => {
     
     id = req.body.id.join('')
     username = req.body.username.join('')
+
+    const tempenergy = await Energy.findOne({owner: new mongoose.Types.ObjectId(id)})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the user energy details for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the user energy details"})
+    })
+    
+    if (tempenergy.energy > 0){
+        amount = 0;
+    }
 
     await Leaderboard.findOneAndUpdate(
     {

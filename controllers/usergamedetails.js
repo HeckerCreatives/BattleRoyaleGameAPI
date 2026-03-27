@@ -182,6 +182,14 @@ exports.updatebyserverusergamedetails = async (req ,res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem getting the user game details"})
     })
 
+    const tempenergy = await Energy.findOne({owner: new mongoose.Types.ObjectId(id)})
+    .then(data => data)
+    .catch(err => {
+        console.log(`There's a problem getting the user energy details for ${username}. Error: ${err}`)
+
+        return res.status(400).json({message: "bad-request", data: "There's a problem getting the user energy details"})
+    })
+
     let level = usergamedata.level
 
     // Calculate base XP
@@ -210,7 +218,13 @@ exports.updatebyserverusergamedetails = async (req ,res) => {
         xpearned *= activeXPEffect.multiplier;
     }
 
-    let newxp = usergamedata.xp + xpearned
+    let energymultiplier = 0;
+
+    if (tempenergy.energy > 0){
+        energymultiplier = 1;
+    }
+
+    let newxp = energymultiplier * (usergamedata.xp + xpearned)
     let newlevel = level
     let expneeded = 80 * level
     let newKills = usergamedata.kill + kill
