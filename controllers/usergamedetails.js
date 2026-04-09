@@ -218,6 +218,8 @@ exports.updatebyserverusergamedetails = async (req ,res) => {
         xpearned *= activeXPEffect.multiplier;
     }
 
+    console.log(`XP EARNED: ${xpearned}`);
+
     let energymultiplier = 0;
 
     if (tempenergy.energy > 0){

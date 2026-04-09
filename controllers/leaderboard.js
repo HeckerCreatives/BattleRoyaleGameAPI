@@ -60,9 +60,11 @@ exports.updateuserleaderboard = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem getting the user energy details"})
     })
     
-    if (tempenergy.energy > 0){
+    if (tempenergy.energy <= 0){
         amount = 0;
     }
+
+    console.log()
 
     await Leaderboard.findOneAndUpdate(
     {
