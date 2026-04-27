@@ -3,48 +3,6 @@ const Leaderboard = require("../models/Leaderboard");
 const Energy = require("../models/Energy")
 const Usergamedetails = require("../models/Usergamedetails")
 
-exports.getleaderboard = async (req, res) => {
-    const {id, username} = req.user
-
-    const lbdata = await Leaderboard.find()
-    .populate({
-        path: "owner",
-        select: "username"
-    })
-    .limit(50)
-    .sort({amount: -1, updatedAt: -1})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting the leaderboard`)
-    })
-
-    if (lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {}
-        }})
-    }
-
-    let tempindex = 0;
-
-    const data = {
-        leaderboard: {}
-    }
-
-    lbdata.forEach(tempdata => {
-        const {owner, amount} = tempdata
-
-        data.leaderboard[tempindex] = {
-            user: owner?.username || "Unknown",
-            amount: amount
-        };
-
-        tempindex++;
-    })
-
-    return res.json({message: "success", data: data})
-}
-
-
 exports.updateuserleaderboard = async (req, res) => {
     let  {id, username, amount } = req.body
 
@@ -393,12 +351,6 @@ exports.getleaderboard = async (req, res) => {
 
         case 'points':
         default:
-            // lbdata = await Leaderboard.find()
-            //     .populate({ path: "usergamedetails" })
-            //     .populate({ path: "owner", select: "username" })
-            //     .limit(pageLimit).skip(skip)
-            //     .sort({ amount: -1, updatedAt: -1 });
-
             lbdata = await Leaderboard.aggregate([
                 {
                     $lookup: {
@@ -417,7 +369,10 @@ exports.getleaderboard = async (req, res) => {
                         as: "owner"
                     }
                 },
-                { $unwind: "$owner" }
+                { $unwind: "$owner" },
+                { $sort: { amount: -1, updatedAt: -1 } },
+                { $skip: skip },
+                { $limit: pageLimit }
             ]);
             
             totalDocuments = await Leaderboard.countDocuments();
