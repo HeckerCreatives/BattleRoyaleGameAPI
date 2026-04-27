@@ -323,34 +323,41 @@ exports.eventconnection = (io, socket) => {
         }
     })
 
-    socket.on("findmatch", async () => {
-        console.log(`find match by ${currentUserId}  region ${userregion}  socketid ${socket.id}`)
+    socket.on("findmatch", async (userdata) => {
+        console.log(`find match by ${currentUserId}  region ${userregion}  socketid ${socket.id}  userdata ${userdata}`)
+
+        const tempuserdata = JSON.parse(userdata)
+
         if (userregion == "asia"){
             asiaserver.emit("findmatchreceive", {
                 username: currentUserId,
                 region: userregion,
-                socketid: socket.id
+                socketid: socket.id,
+                avatarid: tempuserdata.avatarid
             })
         }
         else if (userregion == "uae"){
             uaeserver.emit("findmatchreceive", {
                 username: currentUserId,
                 region: userregion,
-                socketid: socket.id
+                socketid: socket.id,
+                avatarid: tempuserdata.avatarid
             })
         }
         else if (userregion == "us"){
             americaserver.emit("findmatchreceive", {
                 username: currentUserId,
                 region: userregion,
-                socketid: socket.id
+                socketid: socket.id,
+                avatarid: tempuserdata.avatarid
             })
         }
         else if (userregion == "tr"){ //    TURKEY BUT THIS IS AFRICA
             africaserver.emit("findmatchreceive", {
                 username: currentUserId,
                 region: userregion,
-                socketid: socket.id
+                socketid: socket.id,
+                avatarid: tempuserdata.avatarid
             })
         }
     })

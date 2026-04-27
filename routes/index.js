@@ -10,6 +10,8 @@ const routers = app => {
     app.use("/sociallinks", require("./sociallinks"))
     app.use("/title", require("./title"))
     app.use("/usergamedetail", require("./usergamedetails"))
+    app.use("/ads", require("./ads"))
+    app.use("/avatar", require("./avatar"))
 }
 
 module.exports = routers

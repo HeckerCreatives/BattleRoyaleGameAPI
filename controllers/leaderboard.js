@@ -324,8 +324,6 @@ exports.getwinsleaderboard = async (req, res) => {
     return res.json({message: "success", data: data})
 }
 
-
-
 exports.getleaderboard = async (req, res) => {
     const {id, username} = req.user
     const { page, limit, filter, type } = req.query;
