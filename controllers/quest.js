@@ -109,47 +109,19 @@ exports.getquests = async (req, res) => {
         todayProgress = [...todayProgress, ...createdPopulated]
     }
 
-    // Initialize QUEST_SKIP ads for skippable quests
-    const ownerId = new mongoose.Types.ObjectId(id)
-    for (const progress of todayProgress) {
-        if (progress.quest.isSkippable) {
-            const existingAd = await Ads.findOne({
-                questProgressId: progress._id,
-                owner: ownerId
-            })
-            
-            if (!existingAd) {
-                await Ads.create({
-                    owner: ownerId,
-                    itemid: "QUEST-SKIP",
-                    itemname: "Quest Skip",
-                    type: "QUEST_SKIP",
-                    isClaimed: false,
-                    questProgressId: progress._id
-                })
-            }
-        }
-    }
-
-    // Attach ads IDs to quest progress objects
-    const questsWithAds = await Promise.all(todayProgress.map(async (progress) => {
+    const quests = todayProgress.map(progress => {
         const questData = progress.toObject()
         if (progress.quest.isSkippable) {
-            const ad = await Ads.findOne({
-                questProgressId: progress._id,
-                owner: ownerId,
-                type: "QUEST_SKIP"
-            })
-            questData.adsid = ad?._id || null
+            questData.adsUsed = progress.isSkipped
         }
         return questData
-    }))
+    })
 
     return res.json({
         message: "success",
         data: {
             resettime: getsecondsuntilmidnight(),
-            quests: questsWithAds
+            quests
         }
     })
 }

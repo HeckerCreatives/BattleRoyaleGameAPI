@@ -32,11 +32,10 @@ exports.getadsdata = async (req, res) => {
 
 exports.givereward = async (req, res) => {
     const {id} = req.user
-
     const {adsid, type, itemid} = req.body
 
     // Energy reward
-    if (type == "energy"){
+    if (type === "energy") {
         let toadd = 0
 
         switch (itemid) {
@@ -48,32 +47,31 @@ exports.givereward = async (req, res) => {
         await energyUtils.updateEnergy(id, toadd);
     }
 
-    // Quest skip reward
-    if (type === "questskip"){ 
-        const ad = await Ads.findById(new mongoose.Types.ObjectId(adsid))
+    // Quest skip reward — itemid is the questProgressId
+    if (type === "questskip") {
+        const progress = await QuestProgresses.findOne({
+            _id: new mongoose.Types.ObjectId(itemid),
+            owner: new mongoose.Types.ObjectId(id)
+        }).populate("quest")
 
-        if (ad && ad.questProgressId) {
-            const progress = await QuestProgresses.findOne({
-                _id: ad.questProgressId,
-                owner: new mongoose.Types.ObjectId(id)
-            }).populate("quest")
-
-            if (progress && !progress.isClaimed && !progress.isSkipped) {
-                for (const reward of progress.quest.rewards) {
-                    if (reward.type === "exp") await xpUtils.addXP(id, reward.amount)
-                    if (reward.type === "leaderboard") await leaderboardUtils.addPoints(id, reward.amount)
-                    if (reward.type === "energy") await energyUtils.updateEnergy(id, reward.amount)
-                }
-
-                progress.isSkipped = true
-                progress.isCompleted = true
-                progress.isClaimed = true
-                await progress.save()
+        if (progress && !progress.isClaimed && !progress.isSkipped) {
+            for (const reward of progress.quest.rewards) {
+                if (reward.type === "exp") await xpUtils.addXP(id, reward.amount)
+                if (reward.type === "leaderboard") await leaderboardUtils.addPoints(id, reward.amount)
+                if (reward.type === "energy") await energyUtils.updateEnergy(id, reward.amount)
             }
+
+            progress.isSkipped = true
+            progress.isCompleted = true
+            progress.isClaimed = true
+            await progress.save()
         }
     }
 
-    await Ads.findOneAndUpdate({_id: new mongoose.Types.ObjectId(adsid)}, {isClaimed: true})
+    // Mark ad as claimed if adsid is provided
+    if (adsid) {
+        await Ads.findOneAndUpdate({_id: new mongoose.Types.ObjectId(adsid)}, {isClaimed: true})
+    }
 
     return res.json({message: "success"})
 }
