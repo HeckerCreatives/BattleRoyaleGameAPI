@@ -234,31 +234,3 @@ exports.skipquest = async (req, res) => {
 
     return res.json({ message: "success", data: { adsid: ad._id } })
 }
-
-exports.updateprogress = async (req, res) => {
-    const { id } = req.user
-    const { type, amount } = req.body
-
-    const midnight = new Date();
-    midnight.setHours(0, 0, 0, 0);
-
-    const todayProgress = await QuestProgresses.find({
-        owner: new mongoose.Types.ObjectId(id),
-        isCompleted: false,
-        isSkipped: false,
-        createdAt: { $gte: midnight }
-    }).populate("quest")
-
-    const matching = todayProgress.filter(p => p.quest.type === type)
-
-    for (const progress of matching) {
-        progress.progress += amount
-        if (progress.progress >= progress.quest.target) {
-            progress.progress = progress.quest.target
-            progress.isCompleted = true
-        }
-        await progress.save()
-    }
-
-    return res.json({ message: "success" })
-}

@@ -10,6 +10,7 @@ const walletUtils = require("../utils/wallet");
 const energyUtils = require("../utils/energy");
 const leaderboardUtils = require("../utils/leaderboard");
 const inventoryUtils = require("../utils/inventory");
+const { updateQuestProgress } = require("../utils/quest");
 
 exports.getmarketplaceitems = async (req, res) => {
     const { id, username } = req.user;
@@ -330,6 +331,8 @@ exports.useitem = async (req, res) => {
 
             await session.commitTransaction();
             session.endSession();
+
+            await updateQuestProgress(id, "USE_ITEM", quantity);
 
             return res.json({ 
                 message: "success", 

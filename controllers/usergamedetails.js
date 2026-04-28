@@ -6,6 +6,7 @@ const Energy = require("../models/Energy")
 const Matchhistory = require("../models/Matchhistory")
 const ActiveEffects = require("../models/ActiveEffects")
 const {getsecondsuntilmidnight} = require("../utils/datetime")
+const { updateQuestProgress } = require("../utils/quest")
 
 exports.getusergamedetails = async (req, res) => {
     const {id, username} = req.user
@@ -155,6 +156,10 @@ exports.updateusergamedetails = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem updating the user match game history"})
     })
 
+    await updateQuestProgress(id, "MATCH", 1)
+    if (kill > 0) await updateQuestProgress(id, "KILL", kill)
+    if (win > 0) await updateQuestProgress(id, "WIN", win)
+
     const responseData = {
         ...data.toObject(),
         xpEarned: Math.floor(xpearned),
@@ -271,6 +276,10 @@ exports.updatebyserverusergamedetails = async (req ,res) => {
 
         return res.status(400).json({message: "bad-request", data: "There's a problem updating the user match game history"})
     })
+
+    await updateQuestProgress(id, "MATCH", 1)
+    if (kill > 0) await updateQuestProgress(id, "KILL", kill)
+    if (win > 0) await updateQuestProgress(id, "WIN", win)
 
     const responseData = {
         ...data.toObject(),
