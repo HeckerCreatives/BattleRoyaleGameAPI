@@ -12,6 +12,7 @@ const routers = app => {
     app.use("/usergamedetail", require("./usergamedetails"))
     app.use("/ads", require("./ads"))
     app.use("/avatar", require("./avatar"))
+    app.use("/quest", require("./quest"))
 }
 
 module.exports = routers

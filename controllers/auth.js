@@ -18,6 +18,8 @@ const Energy = require("../models/Energy");
 const { Titles, CharacterTitles } = require("../models/Titles");
 const Inventory = require("../models/Inventory");
 const Guest = require("../models/Guest")
+const { Quest, QuestProgresses } = require("../models/Quest");
+const Ads = require("../models/Ads");
 
 const encrypt = async password => {
     const salt = await bcrypt.genSalt(10);
@@ -110,6 +112,37 @@ exports.register = async (req, res) => {
         const titlesdata = await Titles.findOne({ index: "TITLE-000" }).session(session);
         if (!titlesdata) {
             throw new Error("Default title data not found");
+        }
+
+        // Get all active quests
+        const activeQuests = await Quest.find({ isActive: true }).session(session);
+
+        // Create quest progress and ads for each active quest
+        const questProgressDocs = activeQuests.map(q => ({
+            owner: userId,
+            quest: q._id,
+            progress: 0,
+            isCompleted: false,
+            isClaimed: false,
+            isSkipped: false
+        }));
+
+        const createdQuestProgresses = questProgressDocs.length > 0 
+            ? await QuestProgresses.create(questProgressDocs, { session })
+            : [];
+
+        const adsDocs = createdQuestProgresses
+            .map(progress => ({
+                owner: userId,
+                itemid: "QUEST-SKIP",
+                itemname: "Quest Skip",
+                type: "QUEST_SKIP",
+                isClaimed: false,
+                questProgressId: progress._id
+            }));
+
+        if (adsDocs.length > 0) {
+            await Ads.create(adsDocs, { session });
         }
 
         // Create all user-related documents in parallel within the transaction
@@ -323,6 +356,37 @@ exports.guestaccregister = async (req, res) => {
         const titlesdata = await Titles.findOne({ index: "TITLE-000" }).session(session);
         if (!titlesdata) {
             throw new Error("Default title data not found");
+        }
+
+        // Get all active quests
+        const activeQuests = await Quest.find({ isActive: true }).session(session);
+
+        // Create quest progress and ads for each active quest
+        const questProgressDocs = activeQuests.map(q => ({
+            owner: userId,
+            quest: q._id,
+            progress: 0,
+            isCompleted: false,
+            isClaimed: false,
+            isSkipped: false
+        }));
+
+        const createdQuestProgresses = questProgressDocs.length > 0 
+            ? await QuestProgresses.create(questProgressDocs, { session })
+            : [];
+
+        const adsDocs = createdQuestProgresses
+            .map(progress => ({
+                owner: userId,
+                itemid: "QUEST-SKIP",
+                itemname: "Quest Skip",
+                type: "QUEST_SKIP",
+                isClaimed: false,
+                questProgressId: progress._id
+            }));
+
+        if (adsDocs.length > 0) {
+            await Ads.create(adsDocs, { session });
         }
 
         // Create all user-related documents in parallel within the transaction

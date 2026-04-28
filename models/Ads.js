@@ -22,6 +22,11 @@ const adsSchema = new mongoose.Schema(
         isClaimed: {
             type: Boolean,
             default: false
+        },
+        questProgressId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "QuestProgresses",
+            sparse: true
         }
     },
     {
