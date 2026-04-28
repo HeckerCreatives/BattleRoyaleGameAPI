@@ -49,7 +49,7 @@ exports.givereward = async (req, res) => {
     }
 
     // Quest skip reward
-    if (type === "QUEST_SKIP") {
+    if (type === "questskip"){ 
         const ad = await Ads.findById(new mongoose.Types.ObjectId(adsid))
 
         if (ad && ad.questProgressId) {

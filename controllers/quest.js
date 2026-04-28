@@ -131,11 +131,25 @@ exports.getquests = async (req, res) => {
         }
     }
 
+    // Attach ads IDs to quest progress objects
+    const questsWithAds = await Promise.all(todayProgress.map(async (progress) => {
+        const questData = progress.toObject()
+        if (progress.quest.isSkippable) {
+            const ad = await Ads.findOne({
+                questProgressId: progress._id,
+                owner: ownerId,
+                type: "QUEST_SKIP"
+            })
+            questData.adsid = ad?._id || null
+        }
+        return questData
+    }))
+
     return res.json({
         message: "success",
         data: {
             resettime: getsecondsuntilmidnight(),
-            quests: todayProgress
+            quests: questsWithAds
         }
     })
 }
