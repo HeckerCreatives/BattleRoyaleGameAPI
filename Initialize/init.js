@@ -62,6 +62,16 @@ const defaultQuests = [
         rewards: [{ type: "exp", amount: 25 }, { type: "leaderboard", amount: 5 }],
         isSkippable: true,
         isActive: true
+    },
+    {
+        questid: "QUEST-007",
+        title: "Watch Ads",
+        description: "Watch 3 ads.",
+        type: "WATCH_ADS",
+        target: 3,
+        rewards: [{ type: "exp", amount: 30 }],
+        isSkippable: false,
+        isActive: true
     }
 ]
 

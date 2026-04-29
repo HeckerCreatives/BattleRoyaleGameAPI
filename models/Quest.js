@@ -18,7 +18,7 @@ const QuestSchema = new mongoose.Schema(
         },
         type: {
             type: String,
-            enum: ["MATCH", "WIN", "KILL", "USE_ITEM"],
+            enum: ["MATCH", "WIN", "KILL", "USE_ITEM", "WATCH_ADS"],
             required: true
         },
         target: {

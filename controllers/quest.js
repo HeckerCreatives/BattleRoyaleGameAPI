@@ -1,6 +1,8 @@
 const { default: mongoose } = require("mongoose");
 const { Quest, QuestProgresses } = require("../models/Quest");
 const Ads = require("../models/Ads");
+const Inventory = require("../models/Inventory");
+const Marketplace = require("../models/Marketplace");
 const xpUtils = require("../utils/xp");
 const leaderboardUtils = require("../utils/leaderboard");
 const energyUtils = require("../utils/energy");
@@ -65,6 +67,16 @@ const defaultQuests = [
         target: 1,
         rewards: [{ type: "exp", amount: 25 }, { type: "leaderboard", amount: 5 }],
         isSkippable: true,
+        isActive: true
+    },
+    {
+        questid: "QUEST-007",
+        title: "Watch Ads",
+        description: "Watch 3 ads.",
+        type: "WATCH_ADS",
+        target: 3,
+        rewards: [{ type: "exp", amount: 30 }],
+        isSkippable: false,
         isActive: true
     }
 ]
@@ -155,6 +167,48 @@ exports.claimreward = async (req, res) => {
         if (reward.type === "exp") await xpUtils.addXP(id, reward.amount)
         if (reward.type === "leaderboard") await leaderboardUtils.addPoints(id, reward.amount)
         if (reward.type === "energy") await energyUtils.updateEnergy(id, reward.amount)
+        if (reward.type === "potion" || reward.type === "title") {
+            if (!reward.itemid) continue
+            const marketItem = await Marketplace.findOne({ itemid: reward.itemid })
+            if (!marketItem) continue
+            if (reward.type === "title") {
+                const alreadyOwned = await Inventory.findOne({
+                    owner: new mongoose.Types.ObjectId(id),
+                    itemid: reward.itemid
+                })
+                if (!alreadyOwned) {
+                    await Inventory.create([{
+                        owner: new mongoose.Types.ObjectId(id),
+                        itemid: marketItem.itemid,
+                        itemname: marketItem.itemname,
+                        type: "title",
+                        quantity: 1,
+                        isEquipped: false
+                    }])
+                }
+            } else {
+                // potion
+                const existingItem = await Inventory.findOne({
+                    owner: new mongoose.Types.ObjectId(id),
+                    itemid: reward.itemid
+                })
+                if (existingItem) {
+                    await Inventory.findOneAndUpdate(
+                        { owner: new mongoose.Types.ObjectId(id), itemid: reward.itemid },
+                        { $inc: { quantity: reward.amount || 1 } }
+                    )
+                } else {
+                    await Inventory.create([{
+                        owner: new mongoose.Types.ObjectId(id),
+                        itemid: marketItem.itemid,
+                        itemname: marketItem.itemname,
+                        type: "potion",
+                        quantity: reward.amount || 1,
+                        isEquipped: false
+                    }])
+                }
+            }
+        }
     }
 
     progress.isClaimed = true

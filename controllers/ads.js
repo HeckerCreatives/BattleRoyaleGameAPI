@@ -47,30 +47,30 @@ exports.givereward = async (req, res) => {
         await energyUtils.updateEnergy(id, toadd);
     }
 
-    // Quest skip reward — itemid is the questProgressId
-    if (type === "questskip") {
-        const progress = await QuestProgresses.findOne({
-            _id: new mongoose.Types.ObjectId(itemid),
-            owner: new mongoose.Types.ObjectId(id)
-        }).populate("quest")
-
-        if (progress && !progress.isClaimed && !progress.isSkipped) {
-            for (const reward of progress.quest.rewards) {
-                if (reward.type === "exp") await xpUtils.addXP(id, reward.amount)
-                if (reward.type === "leaderboard") await leaderboardUtils.addPoints(id, reward.amount)
-                if (reward.type === "energy") await energyUtils.updateEnergy(id, reward.amount)
-            }
-
-            progress.isSkipped = true
-            progress.isCompleted = true
-            progress.isClaimed = true
-            await progress.save()
-        }
-    }
-
     // Mark ad as claimed if adsid is provided
     if (adsid) {
         await Ads.findOneAndUpdate({_id: new mongoose.Types.ObjectId(adsid)}, {isClaimed: true})
+    }
+
+    // Track watch ads quest progress
+    const watchAdsQuest = await Quest.findOne({ questid: "QUEST-007" })
+    if (watchAdsQuest) {
+        const midnight = new Date()
+        midnight.setHours(0, 0, 0, 0)
+
+        let questProgress = await QuestProgresses.findOne({
+            owner: new mongoose.Types.ObjectId(id),
+            quest: watchAdsQuest._id,
+            createdAt: { $gte: midnight }
+        })
+
+        if (questProgress) {
+            questProgress.progress += 1
+            if (questProgress.progress >= watchAdsQuest.target) {
+                questProgress.isCompleted = true
+            }
+            await questProgress.save()
+        }
     }
 
     return res.json({message: "success"})
