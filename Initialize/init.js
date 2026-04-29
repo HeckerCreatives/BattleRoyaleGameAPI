@@ -66,7 +66,7 @@ const defaultQuests = [
     {
         questid: "QUEST-007",
         title: "Watch Ads",
-        description: "Watch 3 ads.",
+        description: "Watch 1 ads.",
         type: "WATCH_ADS",
         target: 1,
         rewards: [{ type: "exp", amount: 30 }],
