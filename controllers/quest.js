@@ -74,7 +74,7 @@ const defaultQuests = [
         title: "Watch Ads",
         description: "Watch 3 ads.",
         type: "WATCH_ADS",
-        target: 3,
+        target: 1,
         rewards: [{ type: "exp", amount: 30 }],
         isSkippable: false,
         isActive: true
