@@ -1,6 +1,6 @@
 const { default: mongoose } = require("mongoose");
 const Ads = require("../models/Ads")
-const { QuestProgresses } = require("../models/Quest")
+const { QuestProgresses, Quest } = require("../models/Quest")
 const energyUtils = require("../utils/energy");
 const xpUtils = require("../utils/xp");
 const leaderboardUtils = require("../utils/leaderboard");
