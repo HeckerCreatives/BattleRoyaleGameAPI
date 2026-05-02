@@ -7,6 +7,7 @@ const xpUtils = require("../utils/xp");
 const leaderboardUtils = require("../utils/leaderboard");
 const energyUtils = require("../utils/energy");
 const { getsecondsuntilmidnight } = require("../utils/datetime");
+const { grantRewardsToPlayer } = require("../utils/rewards");
 
 const defaultQuests = [
     {
@@ -163,59 +164,14 @@ exports.claimreward = async (req, res) => {
         return res.status(400).json({ message: "failed", data: "Quest has been skipped." })
     }
 
-    for (const reward of progress.quest.rewards) {
-        if (reward.type === "exp") await xpUtils.addXP(id, reward.amount)
-        if (reward.type === "leaderboard") await leaderboardUtils.addPoints(id, reward.amount)
-        if (reward.type === "energy") await energyUtils.updateEnergy(id, reward.amount)
-        if (reward.type === "potion" || reward.type === "title") {
-            if (!reward.itemid) continue
-            const marketItem = await Marketplace.findOne({ itemid: reward.itemid })
-            if (!marketItem) continue
-            if (reward.type === "title") {
-                const alreadyOwned = await Inventory.findOne({
-                    owner: new mongoose.Types.ObjectId(id),
-                    itemid: reward.itemid
-                })
-                if (!alreadyOwned) {
-                    await Inventory.create([{
-                        owner: new mongoose.Types.ObjectId(id),
-                        itemid: marketItem.itemid,
-                        itemname: marketItem.itemname,
-                        type: "title",
-                        quantity: 1,
-                        isEquipped: false
-                    }])
-                }
-            } else {
-                // potion
-                const existingItem = await Inventory.findOne({
-                    owner: new mongoose.Types.ObjectId(id),
-                    itemid: reward.itemid
-                })
-                if (existingItem) {
-                    await Inventory.findOneAndUpdate(
-                        { owner: new mongoose.Types.ObjectId(id), itemid: reward.itemid },
-                        { $inc: { quantity: reward.amount || 1 } }
-                    )
-                } else {
-                    await Inventory.create([{
-                        owner: new mongoose.Types.ObjectId(id),
-                        itemid: marketItem.itemid,
-                        itemname: marketItem.itemname,
-                        type: "potion",
-                        quantity: reward.amount || 1,
-                        isEquipped: false
-                    }])
-                }
-            }
-        }
-    }
+    await grantRewardsToPlayer(id, progress.quest.rewards)
 
     progress.isClaimed = true
     await progress.save()
 
     return res.json({ message: "success" })
 }
+
 
 exports.skipquest = async (req, res) => {
     const { id } = req.user
