@@ -53,23 +53,25 @@ exports.givereward = async (req, res) => {
     }
 
     // Track watch ads quest progress
-    const watchAdsQuest = await Quest.findOne({ questid: "QUEST-007" })
-    if (watchAdsQuest) {
+    const watchAdsQuests = await Quest.find({ type: "WATCH_ADS" })
+    if (watchAdsQuests.length > 0) {
         const midnight = new Date()
         midnight.setHours(0, 0, 0, 0)
 
-        let questProgress = await QuestProgresses.findOne({
-            owner: new mongoose.Types.ObjectId(id),
-            quest: watchAdsQuest._id,
-            createdAt: { $gte: midnight }
-        })
+        for (const watchAdsQuest of watchAdsQuests) {
+            let questProgress = await QuestProgresses.findOne({
+                owner: new mongoose.Types.ObjectId(id),
+                quest: watchAdsQuest._id,
+                createdAt: { $gte: midnight }
+            })
 
-        if (questProgress) {
-            questProgress.progress += 1
-            if (questProgress.progress >= watchAdsQuest.target) {
-                questProgress.isCompleted = true
+            if (questProgress) {
+                questProgress.progress += 1
+                if (questProgress.progress >= watchAdsQuest.target) {
+                    questProgress.isCompleted = true
+                }
+                await questProgress.save()
             }
-            await questProgress.save()
         }
     }
 
