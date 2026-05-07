@@ -2,6 +2,7 @@ const { default: mongoose } = require("mongoose");
 const Leaderboard = require("../models/Leaderboard");
 const Energy = require("../models/Energy")
 const Usergamedetails = require("../models/Usergamedetails")
+const Matchhistory = require("../models/Matchhistory")
 
 exports.updateuserleaderboard = async (req, res) => {
     let  {id, username, amount } = req.body
@@ -206,19 +207,29 @@ exports.getplaytimeleaderboard = async (req, res) => {
 
 exports.getmatchesleaderboard = async (req, res) => {
     const {id, username} = req.user
-    const lbdata = await Usergamedetails.find({losses: {$gt: 0}})
-    .populate({
-        path: "owner",
-        select: "username"
-    })
-    .limit(50)
-    .sort({losses: -1, updatedAt: -1})
-    .then(data => data)
-    .catch(err => {
+    const lbdata = await Matchhistory.aggregate([
+        {
+            $group: {
+                _id: "$owner",
+                amount: { $sum: 1 }
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "_id",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        { $unwind: "$owner" },
+        { $sort: { amount: -1 } },
+        { $limit: 50 }
+    ]).catch(err => {
         console.log(`There's a problem getting the leaderboard`)
     })
 
-    if (lbdata.length <= 0){
+    if (!lbdata || lbdata.length <= 0){
         return res.json({message: "success", data: {
             leaderboard: {}
         }})
@@ -231,11 +242,11 @@ exports.getmatchesleaderboard = async (req, res) => {
     }
 
     lbdata.forEach(tempdata => {
-        const {owner, losses} = tempdata
+        const {owner, amount} = tempdata
 
         data.leaderboard[tempindex] = {
             user: owner.username,
-            amount: losses
+            amount
         };
         tempindex++;
     })

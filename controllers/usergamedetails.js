@@ -116,7 +116,7 @@ exports.updateusergamedetails = async (req, res) => {
     let newKills = usergamedata.kill + kill
     let newDeaths = usergamedata.death + death
     let newPlaytime = (usergamedata.playtime ?? 0) + playtime
-    let newWin = (usergamedata.win ?? 0) + win
+    let newWin = (usergamedata.wins ?? 0) + win
     let newLoss = (usergamedata.losses ?? 0) + loss
 
     console.log("username", username, "new loss", newLoss, "loss", loss)
@@ -237,8 +237,9 @@ exports.updatebyserverusergamedetails = async (req ,res) => {
     let newKills = usergamedata.kill + kill
     let newDeaths = usergamedata.death + death
     let newPlaytime = (usergamedata.playtime ?? 0) + playtime
-    let newWin = (usergamedata.win ?? 0) + win
+    let newWin = (usergamedata.wins ?? 0) + win
     let newLoss = (usergamedata.losses ?? 0) + loss
+
 
     console.log("username", username, "new loss", newLoss, "loss", loss)
 
