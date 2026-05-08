@@ -13,18 +13,31 @@ exports.addXP = async (userId, amount) => {
             throw new Error(`Usergamedetails not found for user ${userId}`);
         }
 
-        let newxp = user.xp + amount;
-        let newlevel = user.level;
-        const expneeded = 80 * user.level;
-
-        if (newxp >= expneeded) {
-            newlevel = user.level + 1;
-            newxp = newxp - expneeded;
+        const xpAmount = Number(amount);
+        if (!Number.isFinite(xpAmount)) {
+            throw new Error(`Invalid XP amount: ${amount}`);
         }
+
+        const totalxp = Math.max(0, Number(user.xp || 0) + xpAmount);
+        const currentLevel = Math.max(1, Number(user.level || 1));
+
+        // O(1) level-up computation to avoid iterative loops:
+        // xp to gain k levels from level L is:
+        // 80 * (L + (L+1) + ... + (L+k-1)) = 40 * k * (2L + k - 1)
+        // Solve quadratic for maximum integer k where requiredXp <= totalxp.
+        const b = (2 * currentLevel) - 1;
+        const k = Math.max(
+            0,
+            Math.floor((-b + Math.sqrt((b * b) + (totalxp / 10))) / 2)
+        );
+
+        const spentxp = 40 * k * ((2 * currentLevel) + k - 1);
+        const newlevel = currentLevel + k;
+        const newxp = totalxp - spentxp;
 
         const result = await Usergamedetails.findOneAndUpdate(
             { owner: ownerId },
-            { $set: { xp: parseInt(newxp), level: parseInt(newlevel) } },
+            { $set: { xp: Math.floor(newxp), level: Math.floor(newlevel) } },
             { new: true }
         );
 
