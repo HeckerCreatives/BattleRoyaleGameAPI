@@ -130,12 +130,41 @@ function uaeServer() {
         console.log("received user count for uae", data)
 
         uaestate.uaecountsetter(data, socket)
+    })
+    uaeserver.on("enteringmatch", (data) => {
+        console.log(`SENDING ENTERING MATCH TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
+        data.playerSocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("enteringmatch", "")
+            }
+        })
     })
-    uaeserver.on("matchfound", (data) => {
-        const playerSocket = socket.sockets.sockets.get(data.socketid)
-        playerSocket.emit("matchfound", data.roomname)
-    })
+    uaeserver.on("waitingroomupdate", data => {
+        console.log(`SENDING WAITING ROOM UPDATE. MATCH DATA: ${JSON.stringify(data)}`);
+
+        data.playerSocket.forEach(tempSocketId => {
+            console.log(`SENDING TO ${tempSocketId}. MATCH DATA: ${JSON.stringify(data)}`);
+
+            const playerSocket = socket.sockets.sockets.get(tempSocketId);
+
+            if (playerSocket) {
+            reliableEmitLatest(playerSocket, "matchstatuschanged", {
+                roomName: data.roomName,
+                players: data.players,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            }, {
+                retryMs: 800,
+                maxRetries: 12
+            });
+            }
+        });
+    });
     uaeserver.on("matchstatuschanged", (data) => {
         console.log(`SENDING STATUS CHANGED TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
@@ -152,18 +181,20 @@ function uaeServer() {
         })
     })
     uaeserver.on("reconnectexist", (data) => {
-        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+        console.log(`SENDING RECON TO PLAYER ${data.playerneedtorecon}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
-        data.playersocket.forEach(tempdata => {
-            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
-            const playerSocket = socket.sockets.sockets.get(tempdata)
+        const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
-            if (playerSocket){
-                playerSocket.emit("reconnectexist", {
-                    roomName: data.roomName
-                })
-            }
-        })
+        if (playerSocket){
+            playerSocket.emit("reconnectexist", {
+                roomName: data.roomName,
+                players: data.players,
+                playerSocket: data.playerSocket,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            })
+        }
     })
     uaeserver.on("reconnectfail", (data) => {
         console.log(`SENDING NO RECON TO PLAYERS.`)
@@ -175,6 +206,16 @@ function uaeServer() {
         
         if (playerSocket){
             playerSocket.emit("reconnectfail")
+        }
+    })
+    uaeserver.on("doneremovereconnect", (data) => {
+        console.log(`SENDING DONE REMOVE RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("doneremovereconnect")
         }
     })
 }
@@ -192,17 +233,47 @@ function amerciaServer() {
     const socket = socketConfig.getIo(); // reuse the same io instance
     
     americaserver.on("connect", () => {
-        console.log("Main Server connected to america server")
+        console.log("Main Server connected to amercia server")
     });
     americaserver.on("sendusercount", (data) => {
-        console.log("received user count for america", data)
+        console.log("received user count for amercia", data)
 
-        americastate.americacountsetter(data, socket)
+        americastate.amerciacountsetter(data, socket)
     })
-    americaserver.on("matchfound", (data) => {
-        const playerSocket = socket.sockets.sockets.get(data.socketid)
-        playerSocket.emit("matchfound", data.roomname)
+    americaserver.on("enteringmatch", (data) => {
+        console.log(`SENDING ENTERING MATCH TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+
+        data.playerSocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("enteringmatch", "")
+            }
+        })
     })
+    americaserver.on("waitingroomupdate", data => {
+        console.log(`SENDING WAITING ROOM UPDATE. MATCH DATA: ${JSON.stringify(data)}`);
+
+        data.playerSocket.forEach(tempSocketId => {
+            console.log(`SENDING TO ${tempSocketId}. MATCH DATA: ${JSON.stringify(data)}`);
+
+            const playerSocket = socket.sockets.sockets.get(tempSocketId);
+
+            if (playerSocket) {
+            reliableEmitLatest(playerSocket, "matchstatuschanged", {
+                roomName: data.roomName,
+                players: data.players,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            }, {
+                retryMs: 800,
+                maxRetries: 12
+            });
+            }
+        });
+    });
     americaserver.on("matchstatuschanged", (data) => {
         console.log(`SENDING STATUS CHANGED TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
@@ -219,18 +290,20 @@ function amerciaServer() {
         })
     })
     americaserver.on("reconnectexist", (data) => {
-        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+        console.log(`SENDING RECON TO PLAYER ${data.playerneedtorecon}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
-        data.playersocket.forEach(tempdata => {
-            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
-            const playerSocket = socket.sockets.sockets.get(tempdata)
+        const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
-            if (playerSocket){
-                playerSocket.emit("reconnectexist", {
-                    roomName: data.roomName
-                })
-            }
-        })
+        if (playerSocket){
+            playerSocket.emit("reconnectexist", {
+                roomName: data.roomName,
+                players: data.players,
+                playerSocket: data.playerSocket,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            })
+        }
     })
     americaserver.on("reconnectfail", (data) => {
         console.log(`SENDING NO RECON TO PLAYERS.`)
@@ -242,6 +315,16 @@ function amerciaServer() {
         
         if (playerSocket){
             playerSocket.emit("reconnectfail")
+        }
+    })
+    americaserver.on("doneremovereconnect", (data) => {
+        console.log(`SENDING DONE REMOVE RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("doneremovereconnect")
         }
     })
 }
@@ -266,10 +349,40 @@ function africaServer() {
 
         africastate.africacountsetter(data, socket)
     })
-    africaserver.on("matchfound", (data) => {
-        const playerSocket = socket.sockets.sockets.get(data.socketid)
-        playerSocket.emit("matchfound", data.roomname)
+    africaserver.on("enteringmatch", (data) => {
+        console.log(`SENDING ENTERING MATCH TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+
+        data.playerSocket.forEach(tempdata => {
+            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+            const playerSocket = socket.sockets.sockets.get(tempdata)
+
+            if (playerSocket){
+                playerSocket.emit("enteringmatch", "")
+            }
+        })
     })
+    africaserver.on("waitingroomupdate", data => {
+        console.log(`SENDING WAITING ROOM UPDATE. MATCH DATA: ${JSON.stringify(data)}`);
+
+        data.playerSocket.forEach(tempSocketId => {
+            console.log(`SENDING TO ${tempSocketId}. MATCH DATA: ${JSON.stringify(data)}`);
+
+            const playerSocket = socket.sockets.sockets.get(tempSocketId);
+
+            if (playerSocket) {
+            reliableEmitLatest(playerSocket, "matchstatuschanged", {
+                roomName: data.roomName,
+                players: data.players,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            }, {
+                retryMs: 800,
+                maxRetries: 12
+            });
+            }
+        });
+    });
     africaserver.on("matchstatuschanged", (data) => {
         console.log(`SENDING STATUS CHANGED TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
@@ -286,18 +399,20 @@ function africaServer() {
         })
     })
     africaserver.on("reconnectexist", (data) => {
-        console.log(`SENDING RECON TO PLAYERS. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
+        console.log(`SENDING RECON TO PLAYER ${data.playerneedtorecon}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
 
-        data.playersocket.forEach(tempdata => {
-            console.log(`SENDING TO ${tempdata}. MATCH DATA: ${data.roomName}  ${data.status}  ${data.maxPlayers}`)
-            const playerSocket = socket.sockets.sockets.get(tempdata)
+        const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
-            if (playerSocket){
-                playerSocket.emit("reconnectexist", {
-                    roomName: data.roomName
-                })
-            }
-        })
+        if (playerSocket){
+            playerSocket.emit("reconnectexist", {
+                roomName: data.roomName,
+                players: data.players,
+                playerSocket: data.playerSocket,
+                maxPlayers: data.maxPlayers,
+                status: data.status,
+                countdown: data.countdown
+            })
+        }
     })
     africaserver.on("reconnectfail", (data) => {
         console.log(`SENDING NO RECON TO PLAYERS.`)
@@ -309,6 +424,16 @@ function africaServer() {
         
         if (playerSocket){
             playerSocket.emit("reconnectfail")
+        }
+    })
+    africaserver.on("doneremovereconnect", (data) => {
+        console.log(`SENDING DONE REMOVE RECON TO PLAYERS.`)
+
+        const {socketid} = data;
+        const playerSocket = socket.sockets.sockets.get(socketid)
+        
+        if (playerSocket){
+            playerSocket.emit("doneremovereconnect")
         }
     })
 }
