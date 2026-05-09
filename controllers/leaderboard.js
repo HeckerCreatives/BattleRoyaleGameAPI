@@ -3,6 +3,9 @@ const Leaderboard = require("../models/Leaderboard");
 const Energy = require("../models/Energy")
 const Usergamedetails = require("../models/Usergamedetails")
 const Matchhistory = require("../models/Matchhistory")
+const cache = require("../utils/cache")
+
+const LB_CACHE_TTL = 60_000; // 60 seconds
 
 exports.updateuserleaderboard = async (req, res) => {
     let  {id, username, amount } = req.body
@@ -40,422 +43,324 @@ exports.updateuserleaderboard = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
     })
 
+    cache.delByPrefix('lb:points');
     return res.json({ message: "success" })
 }
 
 exports.getkillleaderboard = async (req, res) => {
-    const {id, username} = req.user
+    const cacheKey = 'lb:kills:simple';
+    let cached = cache.get(cacheKey);
 
-    const lbdata = await Usergamedetails.find({kill: {$gt: 0}})
-    .populate({
-        path: "owner",
-        select: "username"
-    })
-    .limit(50)
-    .sort({kill: -1, updatedAt: -1})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting the leaderboard`)
-    })
+    if (!cached) {
+        const lbdata = await Usergamedetails.find({ kill: { $gt: 0 } })
+            .populate({ path: "owner", select: "username" })
+            .sort({ kill: -1, updatedAt: -1 })
+            .limit(50)
+            .lean();
 
-    if (lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {}
-        }})
+        if (!lbdata || lbdata.length === 0)
+            return res.json({ message: "success", data: { leaderboard: {} } });
+
+        const leaderboard = {};
+        lbdata.forEach((entry, i) => { leaderboard[i] = { user: entry.owner.username, amount: entry.kill }; });
+
+        cached = { leaderboard };
+        cache.set(cacheKey, cached, LB_CACHE_TTL);
     }
 
-    let tempindex = 0;
-
-    const data = {
-        leaderboard: {}
-    }
-
-    lbdata.forEach(tempdata => {
-        const {owner, kill} = tempdata
-
-        data.leaderboard[tempindex] = {
-            user: owner.username,
-            amount: kill
-        };
-
-        tempindex++;
-    })
-
-    return res.json({message: "success", data: data})
+    return res.json({ message: "success", data: cached });
 }
 
 exports.getdeathleaderboard = async (req, res) => {
-    const {id, username} = req.user
+    const cacheKey = 'lb:deaths:simple';
+    let cached = cache.get(cacheKey);
 
-    const lbdata = await Usergamedetails.find({death: {$gt: 0}})
-    .populate({
-        path: "owner",
-        select: "username"
-    })
-    .limit(50)
-    .sort({death: -1, updatedAt: -1})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting the leaderboard`)
-    })
+    if (!cached) {
+        const lbdata = await Usergamedetails.find({ death: { $gt: 0 } })
+            .populate({ path: "owner", select: "username" })
+            .sort({ death: -1, updatedAt: -1 })
+            .limit(50)
+            .lean();
 
-    if (lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {}
-        }})
+        if (!lbdata || lbdata.length === 0)
+            return res.json({ message: "success", data: { leaderboard: {} } });
+
+        const leaderboard = {};
+        lbdata.forEach((entry, i) => { leaderboard[i] = { user: entry.owner.username, amount: entry.death }; });
+
+        cached = { leaderboard };
+        cache.set(cacheKey, cached, LB_CACHE_TTL);
     }
 
-    let tempindex = 0;
-
-    const data = {
-        leaderboard: {}
-    }
-
-    lbdata.forEach(tempdata => {
-        const {owner, death} = tempdata
-
-        data.leaderboard[tempindex] = {
-            user: owner.username,
-            amount: death
-        };
-
-        tempindex++;
-    })
-
-    return res.json({message: "success", data: data})
+    return res.json({ message: "success", data: cached });
 }
 
-exports.getlevelleaderboard = async (req, res) =>{
-    const {id, username} = req.user
+exports.getlevelleaderboard = async (req, res) => {
+    const cacheKey = 'lb:levels:simple';
+    let cached = cache.get(cacheKey);
 
-    const lbdata = await Usergamedetails.find()
-    .populate({
-        path: "owner",
-        select: "username"
-    })
-    .limit(50)
-    .sort({level: -1})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting the leaderboard`)
-    })
+    if (!cached) {
+        const lbdata = await Usergamedetails.find()
+            .populate({ path: "owner", select: "username" })
+            .sort({ level: -1 })
+            .limit(50)
+            .lean();
 
-    if (lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {}
-        }})
+        if (!lbdata || lbdata.length === 0)
+            return res.json({ message: "success", data: { leaderboard: {} } });
+
+        const leaderboard = {};
+        lbdata.forEach((entry, i) => { leaderboard[i] = { user: entry.owner.username, amount: entry.level }; });
+
+        cached = { leaderboard };
+        cache.set(cacheKey, cached, LB_CACHE_TTL);
     }
 
-    let tempindex = 0;
-
-    const data = {
-        leaderboard: {}
-    }
-
-    lbdata.forEach(tempdata => {
-        const {owner, level} = tempdata
-
-        data.leaderboard[tempindex] = {
-            user: owner.username,
-            amount: level
-        };
-
-        tempindex++;
-    })
-
-    return res.json({message: "success", data: data})
+    return res.json({ message: "success", data: cached });
 }
 
 exports.getplaytimeleaderboard = async (req, res) => {
-    const {id, username} = req.user
-    const lbdata = await Usergamedetails.find({playtime: {$gt: 0}})
-    .populate({
-        path: "owner",
-        select: "username"
-    })
-    .limit(50)
-    .sort({playtime: -1, updatedAt: -1})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting the leaderboard`)
-    })
+    const cacheKey = 'lb:playtime:simple';
+    let cached = cache.get(cacheKey);
 
-    if (lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {}
-        }})
+    if (!cached) {
+        const lbdata = await Usergamedetails.find({ playtime: { $gt: 0 } })
+            .populate({ path: "owner", select: "username" })
+            .sort({ playtime: -1, updatedAt: -1 })
+            .limit(50)
+            .lean();
+
+        if (!lbdata || lbdata.length === 0)
+            return res.json({ message: "success", data: { leaderboard: {} } });
+
+        const leaderboard = {};
+        lbdata.forEach((entry, i) => { leaderboard[i] = { user: entry.owner.username, amount: entry.playtime }; });
+
+        cached = { leaderboard };
+        cache.set(cacheKey, cached, LB_CACHE_TTL);
     }
 
-    let tempindex = 0;
-
-    const data = {
-        leaderboard: {}
-    }
-
-    lbdata.forEach(tempdata => {
-        const {owner, playtime} = tempdata
-
-        data.leaderboard[tempindex] = {
-            user: owner.username,
-            amount: playtime
-        };
-        tempindex++;
-    })
-
-    return res.json({message: "success", data: data})
+    return res.json({ message: "success", data: cached });
 }
 
 exports.getmatchesleaderboard = async (req, res) => {
-    const {id, username} = req.user
-    const lbdata = await Matchhistory.aggregate([
-        {
-            $group: {
-                _id: "$owner",
-                amount: { $sum: 1 }
-            }
-        },
-        {
-            $lookup: {
-                from: "users",
-                localField: "_id",
-                foreignField: "_id",
-                as: "owner"
-            }
-        },
-        { $unwind: "$owner" },
-        { $sort: { amount: -1 } },
-        { $limit: 50 }
-    ]).catch(err => {
-        console.log(`There's a problem getting the leaderboard`)
-    })
+    const cacheKey = 'lb:matches:simple';
+    let cached = cache.get(cacheKey);
 
-    if (!lbdata || lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {}
-        }})
+    if (!cached) {
+        const lbdata = await Matchhistory.aggregate([
+            { $group: { _id: "$owner", amount: { $sum: 1 } } },
+            { $sort: { amount: -1 } },
+            { $limit: 50 },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "_id",
+                    foreignField: "_id",
+                    as: "owner"
+                }
+            },
+            { $unwind: "$owner" },
+            { $project: { amount: 1, "owner.username": 1 } }
+        ]);
+
+        if (!lbdata || lbdata.length === 0)
+            return res.json({ message: "success", data: { leaderboard: {} } });
+
+        const leaderboard = {};
+        lbdata.forEach((entry, i) => { leaderboard[i] = { user: entry.owner.username, amount: entry.amount }; });
+
+        cached = { leaderboard };
+        cache.set(cacheKey, cached, LB_CACHE_TTL);
     }
 
-    let tempindex = 0;
-
-    const data = {
-        leaderboard: {}
-    }
-
-    lbdata.forEach(tempdata => {
-        const {owner, amount} = tempdata
-
-        data.leaderboard[tempindex] = {
-            user: owner.username,
-            amount
-        };
-        tempindex++;
-    })
-
-    return res.json({message: "success", data: data})
+    return res.json({ message: "success", data: cached });
 }
 
 exports.getwinsleaderboard = async (req, res) => {
-    const {id, username} = req.user
-    const lbdata = await Usergamedetails.find({wins: {$gt: 0}})
-    .populate({
-        path: "owner",
-        select: "username"
-    })
-    .limit(50)
-    .sort({wins: -1, updatedAt: -1})
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting the leaderboard`)
-    })
+    const cacheKey = 'lb:wins:simple';
+    let cached = cache.get(cacheKey);
 
-    if (lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {}
-        }})
+    if (!cached) {
+        const lbdata = await Usergamedetails.find({ wins: { $gt: 0 } })
+            .populate({ path: "owner", select: "username" })
+            .sort({ wins: -1, updatedAt: -1 })
+            .limit(50)
+            .lean();
+
+        if (!lbdata || lbdata.length === 0)
+            return res.json({ message: "success", data: { leaderboard: {} } });
+
+        const leaderboard = {};
+        lbdata.forEach((entry, i) => { leaderboard[i] = { user: entry.owner.username, amount: entry.wins }; });
+
+        cached = { leaderboard };
+        cache.set(cacheKey, cached, LB_CACHE_TTL);
     }
 
-    let tempindex = 0;
-
-    const data = {
-        leaderboard: {}
-    }
-
-    lbdata.forEach(tempdata => {
-        const {owner, wins} = tempdata
-
-        data.leaderboard[tempindex] = {
-            user: owner.username,
-            amount: wins
-        };
-        tempindex++;
-    })
-
-    return res.json({message: "success", data: data})
+    return res.json({ message: "success", data: cached });
 }
 
 exports.getleaderboard = async (req, res) => {
-    const {id, username} = req.user
-    const { page, limit, filter, type } = req.query;
+    const { id } = req.user;
+    const { page, limit, type } = req.query;
 
     const leaderboardType = type || 'points';
     const pageLimit = parseInt(limit) || 50;
     const currentPage = parseInt(page) || 1;
     const skip = (currentPage - 1) * pageLimit;
 
-    let lbdata, totalDocuments, amountField;
+    const cacheKey = `lb:${leaderboardType}:${currentPage}:${pageLimit}`;
 
-    // Fetch leaderboard data based on type
-    switch(leaderboardType) {
-        case 'kills':
-            lbdata = await Usergamedetails.find({ kill: { $gt: 0 } })
-                .populate({ path: "owner", select: "username" })
-                .limit(pageLimit).skip(skip)
-                .sort({ kill: -1, updatedAt: -1 });
-            totalDocuments = await Usergamedetails.countDocuments({ kill: { $gt: 0 } });
-            amountField = 'kill';
-            break;
+    // userStats is always fetched live — it's per-user and cheap with the owner index
+    const userStatsPromise = Usergamedetails
+        .findOne({ owner: new mongoose.Types.ObjectId(id) })
+        .lean();
 
-        case 'deaths':
-            lbdata = await Usergamedetails.find({ death: { $gt: 0 } })
-                .populate({ path: "owner", select: "username" })
-                .limit(pageLimit).skip(skip)
-                .sort({ death: -1, updatedAt: -1 });
-            totalDocuments = await Usergamedetails.countDocuments({ death: { $gt: 0 } });
-            amountField = 'death';
-            break;
+    let cached = cache.get(cacheKey);
 
-        case 'levels':
-            lbdata = await Usergamedetails.find()
-                .populate({ path: "owner", select: "username" })
-                .limit(pageLimit).skip(skip)
-                .sort({ level: -1, updatedAt: -1 });
-            totalDocuments = await Usergamedetails.countDocuments();
-            amountField = 'level';
-            break;
+    if (!cached) {
+        let lbPromise, countPromise, amountField;
 
-        case 'playtime':
-            lbdata = await Usergamedetails.find({ playtime: { $gt: 0 } })
-                .populate({ path: "owner", select: "username" })
-                .limit(pageLimit).skip(skip)
-                .sort({ playtime: -1, updatedAt: -1 });
-            totalDocuments = await Usergamedetails.countDocuments({ playtime: { $gt: 0 } });
-            amountField = 'playtime';
-            break;
+        switch (leaderboardType) {
+            case 'kills':
+                lbPromise = Usergamedetails.find({ kill: { $gt: 0 } })
+                    .populate({ path: "owner", select: "username" })
+                    .sort({ kill: -1, updatedAt: -1 }).skip(skip).limit(pageLimit).lean();
+                countPromise = Usergamedetails.countDocuments({ kill: { $gt: 0 } });
+                amountField = 'kill';
+                break;
 
-        case 'matches':
-            lbdata = await Usergamedetails.find({ losses: { $gt: 0 } })
-                .populate({ path: "owner", select: "username" })
-                .limit(pageLimit).skip(skip)
-                .sort({ losses: -1, updatedAt: -1 });
-            totalDocuments = await Usergamedetails.countDocuments({ losses: { $gt: 0 } });
-            amountField = 'losses';
-            break;
+            case 'deaths':
+                lbPromise = Usergamedetails.find({ death: { $gt: 0 } })
+                    .populate({ path: "owner", select: "username" })
+                    .sort({ death: -1, updatedAt: -1 }).skip(skip).limit(pageLimit).lean();
+                countPromise = Usergamedetails.countDocuments({ death: { $gt: 0 } });
+                amountField = 'death';
+                break;
 
-        case 'wins':
-            lbdata = await Usergamedetails.find({ wins: { $gt: 0 } })
-                .populate({ path: "owner", select: "username" })
-                .limit(pageLimit).skip(skip)
-                .sort({ wins: -1, updatedAt: -1 });
-            totalDocuments = await Usergamedetails.countDocuments({ wins: { $gt: 0 } });
-            amountField = 'wins';
-            break;
+            case 'levels':
+                lbPromise = Usergamedetails.find()
+                    .populate({ path: "owner", select: "username" })
+                    .sort({ level: -1 }).skip(skip).limit(pageLimit).lean();
+                countPromise = Usergamedetails.countDocuments();
+                amountField = 'level';
+                break;
 
-        case 'points':
-        default:
-            lbdata = await Leaderboard.aggregate([
-                {
-                    $lookup: {
-                        from: "usergamedetails",
-                        localField: "owner",
-                        foreignField: "owner",
-                        as: "usergamedetails"
+            case 'playtime':
+                lbPromise = Usergamedetails.find({ playtime: { $gt: 0 } })
+                    .populate({ path: "owner", select: "username" })
+                    .sort({ playtime: -1, updatedAt: -1 }).skip(skip).limit(pageLimit).lean();
+                countPromise = Usergamedetails.countDocuments({ playtime: { $gt: 0 } });
+                amountField = 'playtime';
+                break;
+
+            case 'matches':
+                lbPromise = Usergamedetails.find({ losses: { $gt: 0 } })
+                    .populate({ path: "owner", select: "username" })
+                    .sort({ losses: -1, updatedAt: -1 }).skip(skip).limit(pageLimit).lean();
+                countPromise = Usergamedetails.countDocuments({ losses: { $gt: 0 } });
+                amountField = 'losses';
+                break;
+
+            case 'wins':
+                lbPromise = Usergamedetails.find({ wins: { $gt: 0 } })
+                    .populate({ path: "owner", select: "username" })
+                    .sort({ wins: -1, updatedAt: -1 }).skip(skip).limit(pageLimit).lean();
+                countPromise = Usergamedetails.countDocuments({ wins: { $gt: 0 } });
+                amountField = 'wins';
+                break;
+
+            case 'points':
+            default:
+                lbPromise = Leaderboard.aggregate([
+                    { $sort: { amount: -1, updatedAt: -1 } },
+                    { $skip: skip },
+                    { $limit: pageLimit },
+                    {
+                        $lookup: {
+                            from: "usergamedetails",
+                            localField: "owner",
+                            foreignField: "owner",
+                            as: "usergamedetails"
+                        }
+                    },
+                    { $unwind: "$usergamedetails" },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner"
+                        }
+                    },
+                    { $unwind: "$owner" },
+                    {
+                        $project: {
+                            amount: 1,
+                            "owner.username": 1,
+                            "usergamedetails.wins": 1,
+                            "usergamedetails.losses": 1,
+                            "usergamedetails.playtime": 1
+                        }
                     }
-                },
-                { $unwind: "$usergamedetails" },
-                {
-                    $lookup: {
-                        from: "users",
-                        localField: "owner",
-                        foreignField: "_id",
-                        as: "owner"
-                    }
-                },
-                { $unwind: "$owner" },
-                { $sort: { amount: -1, updatedAt: -1 } },
-                { $skip: skip },
-                { $limit: pageLimit }
-            ]);
-            
-            totalDocuments = await Leaderboard.countDocuments();
-            amountField = 'amount';
-            break;
-    }
-
-    const getUserStats = await Usergamedetails.findOne({ owner: new mongoose.Types.ObjectId(id) })
-    .then(data => data)
-    .catch(err => {
-        console.log(`There's a problem getting the user's stats for the leaderboard. Error: ${err}`)
-        return res.status(400).json({message: "bad-request", data: "There's a problem with the server! Please contact customer support for more details." })
-    })
-
-    const userStats = {
-        totalWins: getUserStats?.wins || 0,
-        totalMatches: getUserStats?.losses || 0,
-        playTime: getUserStats?.playtime || 0
-    }
-
-    if (!lbdata || lbdata.length <= 0){
-        return res.json({message: "success", data: {
-            leaderboard: {},
-            userStats
-        }})
-    }
-
-    // Calculate pagination
-    const totalPages = Math.ceil(totalDocuments / pageLimit);
-    const hasNextPage = currentPage < totalPages;
-    const hasPrevPage = currentPage > 1;
-
-    // Build leaderboard response
-    const leaderboard = {};
-    lbdata.forEach((entry, index) => {
-        let matchStats = {
-            totalWins: 0,
-            totalMatches: 0,
-            playTime: 0
-        };
-
-        if (type === 'points') {
-            matchStats.totalWins = entry.usergamedetails?.wins || 0;
-            matchStats.totalMatches = entry.usergamedetails?.losses || 0;
-            matchStats.playTime = entry.usergamedetails?.playtime || 0; 
-        } else {
-            matchStats.totalWins = entry.wins || 0;
-            matchStats.totalMatches = entry.losses || 0;
-            matchStats.playTime = entry.playtime || 0;
+                ]);
+                countPromise = Leaderboard.countDocuments();
+                amountField = 'amount';
+                break;
         }
-        
-        leaderboard[index] = {
-            user: entry.owner.username,
-            amount: entry[amountField],
-            totalWins: matchStats.totalWins,
-            totalMatches: matchStats.totalMatches,
-            playTime: matchStats.playTime
-        };
-    });
 
-    return res.json({
-        message: "success", 
-        data: {
+        const [lbdata, totalDocuments] = await Promise.all([lbPromise, countPromise]);
+
+        if (!lbdata || lbdata.length === 0) {
+            const getUserStats = await userStatsPromise;
+            return res.json({ message: "success", data: {
+                leaderboard: {},
+                userStats: {
+                    totalWins: getUserStats?.wins || 0,
+                    totalMatches: getUserStats?.losses || 0,
+                    playTime: getUserStats?.playtime || 0
+                }
+            }});
+        }
+
+        const totalPages = Math.ceil(totalDocuments / pageLimit);
+        const isPoints = leaderboardType === 'points';
+        const leaderboard = {};
+
+        lbdata.forEach((entry, index) => {
+            leaderboard[index] = {
+                user: entry.owner.username,
+                amount: entry[amountField],
+                totalWins: isPoints ? (entry.usergamedetails?.wins || 0) : (entry.wins || 0),
+                totalMatches: isPoints ? (entry.usergamedetails?.losses || 0) : (entry.losses || 0),
+                playTime: isPoints ? (entry.usergamedetails?.playtime || 0) : (entry.playtime || 0)
+            };
+        });
+
+        cached = {
             leaderboard,
             pagination: {
                 totalDocuments,
                 totalPages,
                 currentPage,
-                hasNextPage,
-                hasPrevPage
-            },
-            userStats
-        }
-    })
+                hasNextPage: currentPage < totalPages,
+                hasPrevPage: currentPage > 1
+            }
+        };
+
+        cache.set(cacheKey, cached, LB_CACHE_TTL);
+    }
+
+    const getUserStats = await userStatsPromise;
+    const userStats = {
+        totalWins: getUserStats?.wins || 0,
+        totalMatches: getUserStats?.losses || 0,
+        playTime: getUserStats?.playtime || 0
+    };
+
+    return res.json({
+        message: "success",
+        data: { ...cached, userStats }
+    });
 }
