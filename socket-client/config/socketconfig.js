@@ -30,7 +30,11 @@ function asiaServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("enteringmatch", "")
+                reliableEmitLatest(playerSocket, "enteringmatch", {
+                    roomName: data.roomName,
+                    maxPlayers: data.maxPlayers,
+                    status: data.status
+                }, { retryMs: 1000, maxRetries: 10 })
             }
         })
     })
@@ -64,10 +68,10 @@ function asiaServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("matchstatuschanged", {
+                reliableEmitLatest(playerSocket, "matchstatuschanged", {
                     roomName: data.roomName,
                     status: data.status
-                })
+                }, { retryMs: 800, maxRetries: 8 })
             }
         })
     })
@@ -77,14 +81,14 @@ function asiaServer() {
         const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
         if (playerSocket){
-            playerSocket.emit("reconnectexist", {
+            reliableEmitLatest(playerSocket, "reconnectexist", {
                 roomName: data.roomName,
                 players: data.players,
                 playerSocket: data.playerSocket,
                 maxPlayers: data.maxPlayers,
                 status: data.status,
                 countdown: data.countdown
-            })
+            }, { retryMs: 800, maxRetries: 10 })
         }
     })
     asiaserver.on("reconnectfail", (data) => {
@@ -139,7 +143,11 @@ function uaeServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("enteringmatch", "")
+                reliableEmitLatest(playerSocket, "enteringmatch", {
+                    roomName: data.roomName,
+                    maxPlayers: data.maxPlayers,
+                    status: data.status
+                }, { retryMs: 1000, maxRetries: 10 })
             }
         })
     })
@@ -173,10 +181,10 @@ function uaeServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("matchstatuschanged", {
+                reliableEmitLatest(playerSocket, "matchstatuschanged", {
                     roomName: data.roomName,
                     status: data.status
-                })
+                }, { retryMs: 800, maxRetries: 8 })
             }
         })
     })
@@ -186,14 +194,14 @@ function uaeServer() {
         const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
         if (playerSocket){
-            playerSocket.emit("reconnectexist", {
+            reliableEmitLatest(playerSocket, "reconnectexist", {
                 roomName: data.roomName,
                 players: data.players,
                 playerSocket: data.playerSocket,
                 maxPlayers: data.maxPlayers,
                 status: data.status,
                 countdown: data.countdown
-            })
+            }, { retryMs: 800, maxRetries: 10 })
         }
     })
     uaeserver.on("reconnectfail", (data) => {
@@ -248,7 +256,11 @@ function amerciaServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("enteringmatch", "")
+                reliableEmitLatest(playerSocket, "enteringmatch", {
+                    roomName: data.roomName,
+                    maxPlayers: data.maxPlayers,
+                    status: data.status
+                }, { retryMs: 1000, maxRetries: 10 })
             }
         })
     })
@@ -282,10 +294,10 @@ function amerciaServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("matchstatuschanged", {
+                reliableEmitLatest(playerSocket, "matchstatuschanged", {
                     roomName: data.roomName,
                     status: data.status
-                })
+                }, { retryMs: 800, maxRetries: 8 })
             }
         })
     })
@@ -295,14 +307,14 @@ function amerciaServer() {
         const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
         if (playerSocket){
-            playerSocket.emit("reconnectexist", {
+            reliableEmitLatest(playerSocket, "reconnectexist", {
                 roomName: data.roomName,
                 players: data.players,
                 playerSocket: data.playerSocket,
                 maxPlayers: data.maxPlayers,
                 status: data.status,
                 countdown: data.countdown
-            })
+            }, { retryMs: 800, maxRetries: 10 })
         }
     })
     americaserver.on("reconnectfail", (data) => {
@@ -357,7 +369,11 @@ function africaServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("enteringmatch", "")
+                reliableEmitLatest(playerSocket, "enteringmatch", {
+                    roomName: data.roomName,
+                    maxPlayers: data.maxPlayers,
+                    status: data.status
+                }, { retryMs: 1000, maxRetries: 10 })
             }
         })
     })
@@ -391,10 +407,10 @@ function africaServer() {
             const playerSocket = socket.sockets.sockets.get(tempdata)
 
             if (playerSocket){
-                playerSocket.emit("matchstatuschanged", {
+                reliableEmitLatest(playerSocket, "matchstatuschanged", {
                     roomName: data.roomName,
                     status: data.status
-                })
+                }, { retryMs: 800, maxRetries: 8 })
             }
         })
     })
@@ -404,14 +420,14 @@ function africaServer() {
         const playerSocket = socket.sockets.sockets.get(data.playerneedtorecon)
 
         if (playerSocket){
-            playerSocket.emit("reconnectexist", {
+            reliableEmitLatest(playerSocket, "reconnectexist", {
                 roomName: data.roomName,
                 players: data.players,
                 playerSocket: data.playerSocket,
                 maxPlayers: data.maxPlayers,
                 status: data.status,
                 countdown: data.countdown
-            })
+            }, { retryMs: 800, maxRetries: 10 })
         }
     })
     africaserver.on("reconnectfail", (data) => {

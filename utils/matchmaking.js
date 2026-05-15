@@ -77,9 +77,23 @@ function reliableEmitLatest(playerSocket, eventName, payload, opts = {}) {
   return messageId;
 }
 
+/**
+ * Reliable broadcast: runs reliableEmitLatest per connected socket.
+ * Use for state that every client must converge on (player counts).
+ * Latest-wins per socket means rapid count changes collapse to the
+ * newest value instead of queueing — exactly right for a counter.
+ */
+function reliableBroadcastLatest(io, eventName, payload, opts = {}) {
+  if (!io || !io.sockets || !io.sockets.sockets) return;
+  for (const [, s] of io.sockets.sockets) {
+    reliableEmitLatest(s, eventName, payload, opts);
+  }
+}
+
 module.exports = {
     latestPending,
     makeId,
     stopPending,
-    reliableEmitLatest
+    reliableEmitLatest,
+    reliableBroadcastLatest
 }
