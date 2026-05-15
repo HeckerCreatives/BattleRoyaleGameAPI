@@ -47,7 +47,6 @@ exports.getusergamedetails = async (req, res) => {
         return res.status(400).json({message: "bad-request", data: "There's a problem with the server. Please try again later"})
     })
 
-    console.log(usergamedata)
 
     const data = {
         kill: usergamedata.kill,
@@ -56,7 +55,8 @@ exports.getusergamedetails = async (req, res) => {
         xp: usergamedata.xp,
         playtime: usergamedata.playtime,
         win: usergamedata.wins ?? 0,
-        loss: usergamedata.losses ?? 0,
+        // loss name not change but its now total matches
+        loss: (usergamedata.losses ?? 0 + usergamedata.wins ?? 0),
         userrank: rankvalue,
         energy: energyval.energy,
         leaderboard: lbvalue.amount,
